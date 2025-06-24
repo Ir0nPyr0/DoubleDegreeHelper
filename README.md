@@ -1,4 +1,4 @@
-## doubledegreehelper
+## DoubleDegreeHelper
 
 **Bedienungsanleitung**
 
