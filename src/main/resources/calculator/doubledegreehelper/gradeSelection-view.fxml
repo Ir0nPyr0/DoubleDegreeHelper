@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.String?>
+<?import javafx.collections.FXCollections?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.DatePicker?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Text?>
+
+<TabPane prefHeight="550.0" prefWidth="900.0" tabClosingPolicy="UNAVAILABLE" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="calculator.doubledegreehelper.controller.gradeSelectionController">
+
+   <tabs>
+      <Tab text="Auswahl">
+         <content>
+            <AnchorPane AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+               <children>
+                  <VBox alignment="TOP_CENTER" spacing="5.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+
+                     <!-- Oberer Bereich: Name/Thema und Geburtsdaten -->
+                     <VBox spacing="5.0">
+                        <children>
+
+                           <!-- Name / Thema HBox -->
+                           <HBox alignment="CENTER_LEFT" spacing="10">
+                              <children>
+                                 <Region />
+                                 <Button fx:id="charDropdownButton" focusTraversable="false" minWidth="30.0" text="▼">
+                                    <opaqueInsets>
+                                       <Insets />
+                                    </opaqueInsets></Button>
+                                 <!-- Dropdown für Gender -->
+                                 <ComboBox fx:id="genderComboBox" minWidth="90.0" prefWidth="120.0" promptText="M/W">
+                                    <items>
+                                       <FXCollections fx:factory="observableArrayList">
+                                          <String fx:value="MALE" />
+                                          <String fx:value="FEMALE" />
+                                       </FXCollections>
+                                    </items>
+                                    <HBox.margin>
+                                       <Insets left="10.0" />
+                                    </HBox.margin>
+                                 </ComboBox>
+                                 <!-- Ende Gender-Dropdown -->
+
+                                 <!-- Vorname -->
+                                 <Text fx:id="nameText" text="Vorname:" />
+                                 <TextArea fx:id="nameField" maxWidth="350.0" minWidth="90.0" prefRowCount="2" promptText="Vorname" wrapText="true" HBox.hgrow="NEVER" />
+
+                                 <!-- Nachname (neu) -->
+                                 <Text fx:id="lastNameText" text="Nachname:">
+                                    <HBox.margin>
+                                       <Insets left="10.0" />
+                                    </HBox.margin>
+                                 </Text>
+                                 <TextArea fx:id="lastNameField" maxWidth="350.0" minWidth="90.0" prefRowCount="2" promptText="Nachname" wrapText="true" HBox.hgrow="NEVER" />
+
+                                 <!-- Thema -->
+                                 <Text fx:id="themeText" text="Thema:">
+                                    <HBox.margin>
+                                       <Insets left="15.0" right="5.0" />
+                                    </HBox.margin>
+                                 </Text>
+                                 <TextArea fx:id="themeField" maxWidth="700.0" minWidth="90.0" prefRowCount="2" prefWidth="700.0" promptText="Ausgewähltes Thema" wrapText="true" HBox.hgrow="ALWAYS" />
+
+                                 <Region HBox.hgrow="ALWAYS" />
+
+                                 <Text fx:id="ectsText" text="ECTS ausgewählt:">
+                                    <HBox.margin>
+                                       <Insets right="5.0" />
+                                    </HBox.margin>
+                                 </Text>
+                                 <Text fx:id="ectsCounter" text="0">
+                                    <HBox.margin>
+                                       <Insets right="15.0" />
+                                    </HBox.margin>
+                                 </Text>
+                              </children>
+                              <padding>
+                                 <Insets top="5.0" />
+                              </padding>
+                           </HBox>
+
+                           <!-- Geburtsdaten HBox: DatePicker statt TextField -->
+                           <HBox alignment="CENTER_LEFT" spacing="10">
+                              <children>
+                                 <Text text="Geboren am:">
+                                    <HBox.margin>
+                                       <Insets left="10.0" />
+                                    </HBox.margin>
+                                 </Text>
+                                 <DatePicker fx:id="birthDatePicker" promptText="TT/MM/JJJJ" HBox.hgrow="ALWAYS" />
+
+                                 <Text text="Geburtsort:" />
+                                 <TextField fx:id="birthPlaceField" promptText="Ort" HBox.hgrow="ALWAYS" />
+
+                                 <Text text="Matrikelnr.:" />
+                                 <TextField fx:id="matriculationField" promptText="000000" HBox.hgrow="ALWAYS" />
+
+                                 <Text text="Abgeschlossen:" />
+                                 <DatePicker fx:id="completionDatePicker" promptText="TT/MM/JJJJ" HBox.hgrow="ALWAYS">
+                                    <HBox.margin>
+                                       <Insets right="10.0" />
+                                    </HBox.margin>
+                                 </DatePicker>
+                              </children>
+                              <padding>
+                                 <Insets top="5.0" />
+                              </padding>
+                           </HBox>
+                           <HBox alignment="CENTER_LEFT" spacing="10">
+                              <children>
+                                 <Text text="Präsident">
+                                    <HBox.margin>
+                                       <Insets left="10.0" />
+                                    </HBox.margin>
+                                 </Text>
+                                 <TextField fx:id="presidentText" maxWidth="300.0" minWidth="200.0" promptText="Prof. Max Mustermann" text="Prof. Dr. Oliver Lenzen" HBox.hgrow="ALWAYS" />
+                                 <Text text="Chairperson:" />
+                                 <TextField fx:id="chairpersonText" maxWidth="300.0" minWidth="200.0" promptText="Prof. Max Mustermann" text="Prof. Dr. Thomas Fankhauser" HBox.hgrow="ALWAYS">
+                                    <HBox.margin>
+                                       <Insets right="10.0" />
+                                    </HBox.margin>
+                                 </TextField>
+                                 <Text text="Liefertermin" />
+                                 <DatePicker fx:id="deliverDatePicker" promptText="TT/MM/JJJJ" />
+                              </children>
+                              <padding>
+                                 <Insets top="5.0" />
+                              </padding>
+                           </HBox>
+
+                        </children>
+                        <padding>
+                           <Insets bottom="5.0" />
+                        </padding>
+                     </VBox>
+
+                     <!-- ListView füllt den verbleibenden Platz -->
+                     <ListView fx:id="listViewContainer" VBox.vgrow="ALWAYS" />
+
+                     <!-- Steuer-Buttons -->
+                     <HBox alignment="CENTER" spacing="20">
+                        <children>
+                           <Button fx:id="autoSelectionButton" text="Auto. Auswahl" />
+                           <Button fx:id="backToHomeButton" text="Zurück zur Startseite" />
+                           <Button fx:id="createButton" text="Word-File erstellen" />
+                           <Button fx:id="safePathButton" text="Speicherordner festlegen" />
+                        </children>
+                     </HBox>
+
+                     <!-- Hinweistext -->
+                     <Text fx:id="safePathText" text="Speicherort zuerst festlegen!">
+                        <VBox.margin>
+                           <Insets bottom="5.0" />
+                        </VBox.margin></Text>
+
+                  </VBox>
+               </children>
+            </AnchorPane>
+         </content>
+      </Tab>
+   </tabs>
+</TabPane>

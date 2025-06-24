@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+
+<TabPane prefHeight="400.0" prefWidth="600.0" tabClosingPolicy="UNAVAILABLE" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/21" fx:controller="calculator.doubledegreehelper.controller.settingsController">
+    <tabs>
+        <Tab text="Einstellungen">
+            <content>
+                <AnchorPane prefHeight="400.0" prefWidth="600.0">
+
+                    <!-- Module-Tabs -->
+                    <TabPane fx:id="moduleTabPane" prefHeight="326.0" prefWidth="600.0" tabClosingPolicy="UNAVAILABLE" AnchorPane.bottomAnchor="50.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                        <tabs>
+                            <Tab text="HHN - Module">
+                                <content>
+                                    <AnchorPane>
+                                        <ListView fx:id="hhnModuleContainer" prefHeight="300.0" prefWidth="600.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                                    </AnchorPane>
+                                </content>
+                            </Tab>
+                            <Tab text="Vergleichsmodule">
+                                <content>
+                                    <AnchorPane>
+                                        <ListView fx:id="compareModuleContainer" prefHeight="300.0" prefWidth="600.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                                    </AnchorPane>
+                                </content>
+                            </Tab>
+                     <Tab text="Kategorien">
+                        <content>
+                           <AnchorPane>
+                              <children>
+                                 <ListView fx:id="categoryContainer" prefHeight="300.0" prefWidth="600.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                              </children>
+                           </AnchorPane>
+                        </content>
+                     </Tab>
+                        </tabs>
+                    </TabPane>
+
+                    <!-- Button-Leiste am unteren Rand -->
+                    <HBox alignment="CENTER_LEFT" prefHeight="50.0" prefWidth="600.0" spacing="10.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="15.0" AnchorPane.rightAnchor="15.0">
+                        <children>
+                            <Button fx:id="backButton" mnemonicParsing="false" text="Zurück">
+                                <HBox.margin><Insets bottom="10" /></HBox.margin>
+                            </Button>
+
+                            <Region HBox.hgrow="ALWAYS" />
+
+                            <Button fx:id="addButton" mnemonicParsing="false" text="Hinzufügen">
+                                <HBox.margin><Insets bottom="10" /></HBox.margin>
+                            </Button>
+
+                            <Region HBox.hgrow="ALWAYS" />
+
+                            <Button fx:id="saveButton" mnemonicParsing="false" text="Speichern">
+                                <HBox.margin><Insets bottom="10" /></HBox.margin>
+                            </Button>
+                        </children>
+                    </HBox>
+
+                </AnchorPane>
+            </content>
+        </Tab>
+    </tabs>
+</TabPane>
