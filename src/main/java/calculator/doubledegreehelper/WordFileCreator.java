@@ -141,7 +141,7 @@ public class WordFileCreator {
 
   /* Find a template file in the user's DoubleDegreeHelper dir. Returns null if not found */
   private static Path findTemplatePath(String baseName) {
-    Path dir = java.nio.file.Paths.get(System.getProperty("user.home"), "DoubleDegreeHelper");
+    Path dir = java.nio.file.Paths.get(System.getProperty("user.home"), "DoubleDegreeHelperData");
     try {
       // 1) Placeholder variant {NUMBER}-<baseName>
       Path p1 = dir.resolve("{NUMBER}" + baseName);

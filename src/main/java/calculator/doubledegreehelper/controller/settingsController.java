@@ -197,7 +197,7 @@ public class settingsController {
             semesterBox.setItems(FXCollections.observableArrayList(Semester.values()));
 
             categoryBox.setItems(AppManager.getCategories());
-            categoryBox.setPrefWidth(120);
+            categoryBox.setPrefWidth(200);
             categoryBox.setConverter(new StringConverter<>() {
                 @Override
                 public String toString(Category c) { return c == null ? "" : c.getName(); }
@@ -232,7 +232,7 @@ public class settingsController {
                 if (it != null) it.setCategory(newV);
             });
 
-            semesterBox.setPrefWidth(70);
+            semesterBox.setPrefWidth(140);
             semesterBox.valueProperty().addListener((o, oldS, newS) -> {
                 ModuleItem it = getItem();
                 if (it != null && newS != null) it.setSemester(newS);

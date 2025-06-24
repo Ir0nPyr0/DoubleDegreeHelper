@@ -19,16 +19,9 @@ public class SaveHandler {
   private static final Path DATA_FILE;
 
   static {
-    String base;
-    String os = System.getProperty("os.name").toLowerCase();
-    if (os.contains("win")) {
-      base = System.getenv("APPDATA");           // z. B. C:\Users\<user>\AppData\Roaming
-    } else if (os.contains("mac")) {
-      base = System.getProperty("user.home") + "/Library/Application Support";
-    } else { // Linux & Co.
-      base = System.getProperty("user.home");
-    }
-    DATA_DIR  = Paths.get(base, "DoubleDegreeHelper");
+    // Store the data directly in the user's home directory under "DoubleDegreeHelperData"
+    String base = System.getProperty("user.home");
+    DATA_DIR  = Paths.get(base, "DoubleDegreeHelperData");
     DATA_FILE = DATA_DIR.resolve("modules.dat");
   }
 

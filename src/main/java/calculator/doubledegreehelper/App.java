@@ -26,6 +26,6 @@ public class App extends Application {
          * «DoubleDegreeHelper» unter dem Dateinamen «modules.dat» gespeichert.
          * So bleibt der Stand nach einem Neustart erhalten.
          */
-        saveHandler.saveData();
+        //saveHandler.saveData();
     }
 }
