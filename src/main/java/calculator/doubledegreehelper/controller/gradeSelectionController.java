@@ -366,54 +366,68 @@ public class gradeSelectionController {
     }
 
     private void buildCharPopup(){
-        String all = "ĂÂĐÊÔƠƯÁÀẢÃẠẮẰẲẴẶẤẦẨẪẬ"
-            + "ÓÒỎÕỌỐỒỔỖỘỚờởỡợ"
-            + "ÚÙỦŨỤỨỮỰ"
-            + "ÍÌĈĨỊÝỲỶỸỴ"
-            + "ăâđêôơưáàảãạắằẳẵặấầẩẫậ"
-            + "óòỏõọốồổỗỘớờởỡợúùủũụứừửữựíìỉĩịýỳỷỹỵ";
+        // Groß- und Kleinbuchstaben getrennt
+        String upper = "ÁÀẢÃẠĂẮẰẲẴẶÂẤẦẨẪẬ" +
+                       "ÉÈẺẼẸÊẾỀỂỄỆ" +
+                       "ÍÌỈĨỊ" +
+                       "ÓÒỎÕỌÔỐỒỔỖỘƠỚỜỞỠỢ" +
+                       "ÚÙỦŨỤƯỨỪỬỮỰ" +
+                       "ÝỲỶỸỴ" +
+                       "Đ";
+
+        String lower = "áàảãạăắằẳẵặâấầẩẫậ" +
+                       "éèẻẽẹêếềểễệ" +
+                       "íìỉĩị" +
+                       "óòỏõọôốồổỗộơớờởỡợ" +
+                       "úùủũụưứừửữự" +
+                       "ýỳỷỹỵ" +
+                       "đ";
+
         charPopup.getContent().clear();
+
+        GridPane gridUpper = createCharGrid(upper);
+        GridPane gridLower = createCharGrid(lower);
+
+        HBox container = new HBox(16, gridUpper, gridLower);
+        container.setPadding(new Insets(10));
+
+        charPopup.getContent().add(container);
+        charPopup.setAutoHide(true);
+        charDropdownButton.setOnAction(e -> {
+            if (charPopup.isShowing()) {
+                charPopup.hide();
+            } else {
+                Bounds b = charDropdownButton.localToScreen(charDropdownButton.getBoundsInLocal());
+                charPopup.show(charDropdownButton, b.getMinX(), b.getMaxY() + 4);
+            }
+        });
+    }
+
+    // Hilfsmethode: Baut ein GridPane für eine gegebene Zeichenkette
+    private GridPane createCharGrid(String chars){
         GridPane grid = new GridPane();
-        grid.setHgap(8); grid.setVgap(8); grid.setPadding(new Insets(10));
-        int cols=7;
-        for(int i=0;i<all.length();i++){
-            char c=all.charAt(i);
-            Label lbl=new Label(String.valueOf(c));
+        grid.setHgap(8);
+        grid.setVgap(8);
+        int cols = 7;
+        for (int i = 0; i < chars.length(); i++) {
+            char c = chars.charAt(i);
+            Label lbl = new Label(String.valueOf(c));
             lbl.setStyle("-fx-font-size:18;-fx-font-weight:bold;-fx-border-color:#666;"
-                +"-fx-background-color:#f9f9f9;-fx-padding:6 10;");
-            lbl.setOnMouseClicked(e->{
-                if(e.getButton()==MouseButton.PRIMARY){
-                    var owner=charDropdownButton.getScene().getFocusOwner();
-                    if(owner instanceof TextInputControl tic){
-                        int p=tic.getCaretPosition();
-                        tic.insertText(p,String.valueOf(c));
-                        tic.positionCaret(p+1);
+                + "-fx-background-color:#f9f9f9;-fx-padding:6 10;");
+            lbl.setOnMouseClicked(e -> {
+                if (e.getButton() == MouseButton.PRIMARY) {
+                    var owner = charDropdownButton.getScene().getFocusOwner();
+                    if (owner instanceof TextInputControl tic) {
+                        int p = tic.getCaretPosition();
+                        tic.insertText(p, String.valueOf(c));
+                        tic.positionCaret(p + 1);
                     }
                     charPopup.hide();
                 }
             });
-            grid.add(lbl,i%cols,i/cols);
+            grid.add(lbl, i % cols, i / cols);
         }
-        charPopup.getContent().add(grid);
-        charPopup.setAutoHide(true);
-        charDropdownButton.setOnMouseEntered(e->{
-            if(!charPopup.isShowing()){
-                Bounds b=charDropdownButton.localToScreen(charDropdownButton.getBoundsInLocal());
-                charPopup.show(charDropdownButton,b.getMinX(),b.getMaxY()+4);
-            }
-        });
-        charDropdownButton.setOnMouseExited(e->{
-            Point2D m=new Point2D(e.getScreenX(),e.getScreenY());
-            Bounds btn=charDropdownButton.localToScreen(charDropdownButton.getBoundsInLocal());
-            Bounds pop=grid.localToScreen(grid.getBoundsInLocal());
-            if(!btn.contains(m)&&!pop.contains(m)) charPopup.hide();
-        });
-        grid.setOnMouseExited(e->{
-            Point2D m=new Point2D(e.getScreenX(),e.getScreenY());
-            Bounds btn=charDropdownButton.localToScreen(charDropdownButton.getBoundsInLocal());
-            Bounds pop=grid.localToScreen(grid.getBoundsInLocal());
-            if(!btn.contains(m)&&!pop.contains(m)) charPopup.hide();
-        });
+        return grid;
     }
 
     private String normalize(String s){

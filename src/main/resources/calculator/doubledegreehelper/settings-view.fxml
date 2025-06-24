@@ -25,7 +25,7 @@
                                     </AnchorPane>
                                 </content>
                             </Tab>
-                            <Tab text="Vergleichsmodule">
+                            <Tab text="VGU - Module">
                                 <content>
                                     <AnchorPane>
                                         <ListView fx:id="compareModuleContainer" prefHeight="300.0" prefWidth="600.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />

@@ -10,7 +10,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<TabPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" tabClosingPolicy="UNAVAILABLE" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="calculator.doubledegreehelper.controller.homeController">
+<TabPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="600.0" prefWidth="800.0" tabClosingPolicy="UNAVAILABLE" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="calculator.doubledegreehelper.controller.homeController">
   <tabs>
     <Tab text="Startseite">
       <content>
@@ -18,14 +18,14 @@
                <children>
                   <VBox alignment="CENTER" layoutX="180.0" layoutY="10.0" prefHeight="359.0" prefWidth="500.0" AnchorPane.bottomAnchor="2.0" AnchorPane.leftAnchor="50.0" AnchorPane.rightAnchor="50.0" AnchorPane.topAnchor="10.0">
                      <children>
-                        <ImageView fitHeight="193.0" fitWidth="198.0" pickOnBounds="true" preserveRatio="true">
+                        <ImageView fitHeight="280.0" fitWidth="305.0" pickOnBounds="true" preserveRatio="true">
                            <image>
                               <Image url="@../logo.png" />
                            </image>
                         </ImageView>
                         <VBox alignment="TOP_CENTER" prefHeight="154.0" prefWidth="500.0">
                            <children>
-                              <Button fx:id="startButton" contentDisplay="CENTER" minHeight="25.0" minWidth="107.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="107.0" text="Neuer Student">
+                              <Button fx:id="startButton" contentDisplay="CENTER" mnemonicParsing="false" prefHeight="50.0" prefWidth="160.0" text="Neuer Student">
                                  <opaqueInsets>
                                     <Insets />
                                  </opaqueInsets>
@@ -33,7 +33,7 @@
                                     <Insets bottom="20.0" />
                                  </VBox.margin>
                               </Button>
-                              <Button fx:id="settingsButton" contentDisplay="CENTER" minHeight="25.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="107.0" text="Einstellungen">
+                              <Button fx:id="settingsButton" contentDisplay="CENTER" mnemonicParsing="false" prefHeight="50.0" prefWidth="160.0" text="Einstellungen">
                                  <opaqueInsets>
                                     <Insets />
                                  </opaqueInsets>
@@ -45,12 +45,12 @@
                         </VBox>
                         <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0">
                            <children>
-                              <Button fx:id="transcriptEditButton" contentDisplay="CENTER" minHeight="25.0" minWidth="130.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="130.0" text="Zeugnis bearbeiten">
+                              <Button fx:id="transcriptEditButton" contentDisplay="CENTER" mnemonicParsing="false" text="Zeugnis bearbeiten">
                                  <opaqueInsets>
                                     <Insets />
                                  </opaqueInsets>
                               </Button>
-                              <Button fx:id="diplomaEditButton" contentDisplay="CENTER" minHeight="25.0" minWidth="130.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="130.0" text="Diploma bearbeiten">
+                              <Button fx:id="diplomaEditButton" contentDisplay="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" mnemonicParsing="false" text="Diploma bearbeiten">
                                  <opaqueInsets>
                                     <Insets />
                                  </opaqueInsets>
@@ -58,7 +58,7 @@
                                     <Insets left="10.0" right="10.0" />
                                  </HBox.margin>
                               </Button>
-                              <Button fx:id="certificateEditButton" contentDisplay="CENTER" minHeight="25.0" minWidth="130.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="130.0" text="Zertifikat bearbeiten">
+                              <Button fx:id="certificateEditButton" contentDisplay="CENTER" mnemonicParsing="false" text="Zertifikat bearbeiten">
                                  <opaqueInsets>
                                     <Insets />
                                  </opaqueInsets>
