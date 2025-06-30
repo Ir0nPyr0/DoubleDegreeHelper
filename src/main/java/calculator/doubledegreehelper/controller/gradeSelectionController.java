@@ -93,6 +93,8 @@ public class gradeSelectionController {
                 }
             });
         }
+
+        // --- Update Student object when text changes -----------------------
         nameField.textProperty().addListener((obs, o, n) -> {
             Student s = AppManager.getStudent();
             if (s != null) s.setFirstName(n.trim());
@@ -101,12 +103,18 @@ public class gradeSelectionController {
             Student s = AppManager.getStudent();
             if (s != null) s.setLastName(n.trim());
         });
+        // NEW: keep Student.birthPlace in sync with UI
+        birthPlaceField.textProperty().addListener((obs, o, n) -> {
+            Student s = AppManager.getStudent();
+            if (s != null) s.setBirthPlace(n.trim());
+        });
         chairpersonText.textProperty().addListener((obs, o, n) -> {
             AppManager.setChairperson(n.trim());
         });
         presidentText.textProperty().addListener((obs, o, n) -> {
             AppManager.setPresident(n.trim());
         });
+        // -------------------------------------------------------------------
 
         genderComboBox.setItems(FXCollections.observableArrayList(Gender.MALE, Gender.FEMALE));
         genderComboBox.setCellFactory(cb -> new ListCell<>() {
@@ -322,12 +330,12 @@ public class gradeSelectionController {
                 sem,
                 m.getYear(),
                 m.getCategory() != null ? m.getCategory().getName() : "<keine Kategorie>");
-                activeModule.add(new StudentModule(m.getName(),
-                    m.getSemester(),
-                    m.getYear(),
-                    m.getEcts(),
-                    m.getGrade(),
-                    m.getCategory()));
+            activeModule.add(new StudentModule(m.getName(),
+                m.getSemester(),
+                m.getYear(),
+                m.getEcts(),
+                m.getGrade(),
+                m.getCategory()));
         }
         System.out.println("================================");
 
@@ -368,20 +376,20 @@ public class gradeSelectionController {
     private void buildCharPopup(){
         // Groß- und Kleinbuchstaben getrennt
         String upper = "ÁÀẢÃẠĂẮẰẲẴẶÂẤẦẨẪẬ" +
-                       "ÉÈẺẼẸÊẾỀỂỄỆ" +
-                       "ÍÌỈĨỊ" +
-                       "ÓÒỎÕỌÔỐỒỔỖỘƠỚỜỞỠỢ" +
-                       "ÚÙỦŨỤƯỨỪỬỮỰ" +
-                       "ÝỲỶỸỴ" +
-                       "Đ";
+            "ÉÈẺẼẸÊẾỀỂỄỆ" +
+            "ÍÌỈĨỊ" +
+            "ÓÒỎÕỌÔỐỒỔỖỘƠỚỜỞỠỢ" +
+            "ÚÙỦŨỤƯỨỪỬỮỰ" +
+            "ÝỲỶỸỴ" +
+            "Đ";
 
         String lower = "áàảãạăắằẳẵặâấầẩẫậ" +
-                       "éèẻẽẹêếềểễệ" +
-                       "íìỉĩị" +
-                       "óòỏõọôốồổỗộơớờởỡợ" +
-                       "úùủũụưứừửữự" +
-                       "ýỳỷỹỵ" +
-                       "đ";
+            "éèẻẽẹêếềểễệ" +
+            "íìỉĩị" +
+            "óòỏõọôốồổỗộơớờởỡợ" +
+            "úùủũụưứừửữự" +
+            "ýỳỷỹỵ" +
+            "đ";
 
         charPopup.getContent().clear();
 
@@ -412,8 +420,8 @@ public class gradeSelectionController {
         for (int i = 0; i < chars.length(); i++) {
             char c = chars.charAt(i);
             Label lbl = new Label(String.valueOf(c));
-            lbl.setStyle("-fx-font-size:18;-fx-font-weight:bold;-fx-border-color:#666;"
-                + "-fx-background-color:#f9f9f9;-fx-padding:6 10;");
+            lbl.setStyle("-fx-font-size:18;-fx-font-weight:bold;-fx-border-color:#666;" +
+                "-fx-background-color:#f9f9f9;-fx-padding:6 10;");
             lbl.setOnMouseClicked(e -> {
                 if (e.getButton() == MouseButton.PRIMARY) {
                     var owner = charDropdownButton.getScene().getFocusOwner();

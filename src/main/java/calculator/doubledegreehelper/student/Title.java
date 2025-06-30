@@ -2,7 +2,7 @@ package calculator.doubledegreehelper.student;
 
 public enum Title {
   MR("Mr"),
-  MRS("Mrs");
+  MRS("Ms");
 
   private final String displayName;
 
