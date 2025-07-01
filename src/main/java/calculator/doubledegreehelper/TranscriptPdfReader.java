@@ -60,8 +60,32 @@ public class TranscriptPdfReader {
       }
     }
 
-    firstname = fullName;
-    lastname  = "";
+    // --- Derive first and last names --------------------------------------
+    String extractedFirst = fullName;
+    String extractedLast  = "";
+    if (fullName.contains(",")) {
+      // Pattern: LAST, FIRST MIDDLE -> take parts around comma
+      String[] parts = fullName.split(",", 2);
+      extractedLast  = parts[0].trim();
+      extractedFirst = parts[1].trim();
+    } else {
+      String[] tokens = fullName.split("\\s+");
+      if (tokens.length >= 2) {
+        extractedLast  = tokens[0];
+        extractedFirst = tokens[tokens.length-1];
+      }
+    }
+
+    firstname = extractedFirst;
+    lastname  = extractedLast;
+
+    String fullOriginalName = fullName.trim();
+
+    String[] tokensAll = fullName.trim().split("\\s+");
+    String middleName = "";
+    if (tokensAll.length > 2) {
+      middleName = String.join(" ", java.util.Arrays.copyOfRange(tokensAll, 1, tokensAll.length-1));
+    }
 
     for (String line : lines) {
       line = line.trim();
@@ -153,6 +177,9 @@ public class TranscriptPdfReader {
         studentId, modules.size(), totalGrade,
         bornDate, grantedAt
     );
+
+    student.setFullName(fullOriginalName);
+    student.setMiddleName(middleName.trim());
 
     modules.forEach(student::addModule);
     printInfo(firstname, studentId, df, bornDate, bornIn, totalGrade, modules);

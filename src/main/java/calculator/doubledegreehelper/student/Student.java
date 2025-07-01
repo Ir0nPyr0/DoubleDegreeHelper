@@ -16,7 +16,8 @@ public class Student {
   private Title title;
   private Gender gender;
   private Date birthDate, grantedAt, deliverDate;
-  private String firstName, lastName, birthPlace, theme;
+  private String firstName, middleName, lastName, birthPlace, theme;
+  private String fullName;
   private int number, semesterTotal, totalGrade;
   private List<StudentModule> modules;
 
@@ -27,6 +28,7 @@ public class Student {
     this.title = title;
     this.firstName = firstname;
     this.lastName = lastname;
+    this.fullName = (firstname == null ? "" : firstname) + (lastname==null||lastname.isBlank()?"":" "+lastname);
     this.number = number;
     this.semesterTotal = semesterTotal;
     this.birthPlace = bornIn;
@@ -48,6 +50,9 @@ public class Student {
 
   public String getFirstName() { return firstName; }
   public void setFirstName(String firstName) { this.firstName = firstName; }
+
+  public String getMiddleName() { return middleName; }
+  public void setMiddleName(String middleName) { this.middleName = middleName; }
 
   public String getLastName() { return lastName; }
   public void setLastName(String lastName) { this.lastName = lastName; }
@@ -122,4 +127,26 @@ public class Student {
     }
     return grade / counter;
   }
+
+  /**
+   * Returns the full original name (family-middle-given order for Vietnamese names).
+   * Falls back to firstName + " " + lastName if not explicitly set.
+   */
+  public String getFullName() {
+    if (fullName != null && !fullName.isBlank()) return fullName;
+
+    StringBuilder sb = new StringBuilder();
+    if (firstName!=null && !firstName.isBlank()) sb.append(firstName);
+    if (middleName!=null && !middleName.isBlank()) {
+      if(sb.length()>0) sb.append(" ");
+      sb.append(middleName);
+    }
+    if (lastName!=null && !lastName.isBlank()) {
+      if(sb.length()>0) sb.append(" ");
+      sb.append(lastName);
+    }
+    return sb.toString();
+  }
+
+  public void setFullName(String fullName) { this.fullName = fullName; }
 }

@@ -42,7 +42,7 @@ public class gradeSelectionController {
     @FXML private DatePicker              birthDatePicker, completionDatePicker, deliverDatePicker;
     @FXML private Text                    ectsCounter, safePathText;
     @FXML private TextField               birthPlaceField, chairpersonText, presidentText, matriculationField;
-    @FXML private TextArea                themeField, nameField, lastNameField;
+    @FXML private TextArea                themeField, nameField, middleNameField, lastNameField;
     @FXML private ListView<StudentModule> listViewContainer;
     @FXML private ComboBox<Gender>        genderComboBox;
     @FXML private Button                  backToHomeButton, createButton, safePathButton, charDropdownButton, autoSelectionButton;
@@ -76,7 +76,7 @@ public class gradeSelectionController {
         }
 
         List<TextInputControl> inputs = List.of(
-            nameField, themeField,
+            nameField, middleNameField, lastNameField, themeField,
             birthPlaceField, matriculationField,
             chairpersonText, presidentText
         );
@@ -98,6 +98,10 @@ public class gradeSelectionController {
         nameField.textProperty().addListener((obs, o, n) -> {
             Student s = AppManager.getStudent();
             if (s != null) s.setFirstName(n.trim());
+        });
+        middleNameField.textProperty().addListener((obs, o, n) -> {
+            Student s = AppManager.getStudent();
+            if (s != null) s.setMiddleName(n.trim());
         });
         lastNameField.textProperty().addListener((obs, o, n) -> {
             Student s = AppManager.getStudent();
@@ -163,6 +167,7 @@ public class gradeSelectionController {
         if (s==null || comps==null) return;
 
         nameField.setText(s.getFirstName());
+        middleNameField.setText(s.getMiddleName());
         lastNameField.setText(s.getLastName());
         genderComboBox.setValue(s.getGender());
         themeField.setText(s.getTheme());

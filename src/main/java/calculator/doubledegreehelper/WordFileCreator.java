@@ -52,7 +52,8 @@ public class WordFileCreator {
     m.put("{LASTN}",     s.getLastName());
     m.put("{FIRSTNAME}", s.getFirstName());
     m.put("{LASTNAME}",  s.getLastName());
-    m.put("{NAME}",      s.getFirstName() + " " + s.getLastName());
+    m.put("{MIDDLENAME}", s.getMiddleName()==null?"":s.getMiddleName());
+    m.put("{NAME}",      s.getFullName());
     m.put("{TITLE}",     s.getTitle()==null?"":s.getTitle().getDisplayName());
     m.put("{BDATE}",     DATE.format(s.getBirthDate()));
     m.put("{BPLACE}",    s.getBirthPlace());
@@ -271,9 +272,8 @@ public class WordFileCreator {
     else if (g <= 4.0) desc = "sufficient";
     else               desc = "non sufficient";
 
-    // Round DOWN (Abschneiden) statt normales Runden, damit z. B. 1.387 -> 1.3 bzw. 1.38
-    double g1d = Math.floor(g * 10.0)  / 10.0;   // eine Nachkommastelle
-    double g2d = Math.floor(g * 100.0) / 100.0;  // zwei Nachkommastellen
+    double g1d = Math.floor(g * 10.0)  / 10.0;
+    double g2d = Math.floor(g * 100.0) / 100.0;
 
     if (mode) {
       return String.format(Locale.US, "%s (%.1f)", desc, g1d);
