@@ -51,13 +51,6 @@
                                  <Text fx:id="nameText" text="Vorname:" />
                                  <TextArea fx:id="nameField" maxWidth="350.0" minWidth="90.0" prefRowCount="2" promptText="Vorname" wrapText="true" HBox.hgrow="NEVER" />
 
-                                 <Text fx:id="middleNameText" text="Mittelname:">
-                                    <HBox.margin>
-                                       <Insets left="10.0" />
-                                    </HBox.margin>
-                                 </Text>
-                                 <TextArea fx:id="middleNameField" maxWidth="350.0" minWidth="90.0" prefRowCount="2" promptText="Mittelname" wrapText="true" HBox.hgrow="NEVER" />
-
                                  <Text fx:id="lastNameText" text="Nachname:">
                                     <HBox.margin>
                                        <Insets left="10.0" />

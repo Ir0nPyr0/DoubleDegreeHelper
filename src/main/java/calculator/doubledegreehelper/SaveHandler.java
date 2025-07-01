@@ -14,19 +14,16 @@ import java.util.List;
 public class SaveHandler {
   private static final Logger logger = LoggerFactory.getLogger(SaveHandler.class);
 
-  // Plattform-abhängiges Datenverzeichnis unterhalb des Benutzerpfades
   private static final Path DATA_DIR;
   private static final Path DATA_FILE;
 
   static {
-    // Store the data directly in the user's home directory under "DoubleDegreeHelperData"
     String base = System.getProperty("user.home");
     DATA_DIR  = Paths.get(base, "DoubleDegreeHelperData");
     DATA_FILE = DATA_DIR.resolve("modules.dat");
   }
 
   public void saveData() {
-    // Verzeichnis anlegen, falls es noch nicht existiert
     try {
       Files.createDirectories(DATA_DIR);
     } catch (IOException io) {
@@ -74,12 +71,6 @@ public class SaveHandler {
     }
   }
 
-  /**
-   * Kompatibler ObjectInputStream, der beim Deserialisieren alte Paketnamen
-   * (calculator.degreecalculator.*) auf die aktuellen
-   * (calculator.doubledegreehelper.*) abbildet. So können auch noch
-   * gespeicherte Dateien aus älteren Versionen geladen werden.
-   */
   private static class CompatObjectInputStream extends ObjectInputStream {
     CompatObjectInputStream(InputStream in) throws IOException { super(in); }
 

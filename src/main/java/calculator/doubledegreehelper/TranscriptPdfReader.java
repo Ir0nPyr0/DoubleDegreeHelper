@@ -70,8 +70,8 @@ public class TranscriptPdfReader {
     } else {
       String[] tokens = fullName.split("\\s+");
       if (tokens.length >= 2) {
-        extractedLast  = tokens[0];
-        extractedFirst = tokens[tokens.length-1];
+        extractedLast = tokens[0];
+        extractedFirst = String.join(" ", java.util.Arrays.copyOfRange(tokens, 1, tokens.length));
       }
     }
 
@@ -82,9 +82,6 @@ public class TranscriptPdfReader {
 
     String[] tokensAll = fullName.trim().split("\\s+");
     String middleName = "";
-    if (tokensAll.length > 2) {
-      middleName = String.join(" ", java.util.Arrays.copyOfRange(tokensAll, 1, tokensAll.length-1));
-    }
 
     for (String line : lines) {
       line = line.trim();

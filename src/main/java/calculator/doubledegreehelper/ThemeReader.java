@@ -133,26 +133,18 @@ public class ThemeReader {
                       part.substring(1).toLowerCase(java.util.Locale.ROOT))
                   .collect(java.util.stream.Collectors.joining(" "));
 
-              // --- Split into family (first token) / middle / given (last token) -------------
               String[] nameParts = capitalised.split("\\s+");
               if (nameParts.length >= 2) {
-                // Family name = first token
                 student.setLastName(nameParts[0]);
 
-                // Variant A: given (first) name = LAST token, middle = 1..len-2
-                student.setFirstName(nameParts[nameParts.length-1]);
-
-                if (nameParts.length > 2) {
-                  String middle = String.join(" ", java.util.Arrays.copyOfRange(nameParts, 1, nameParts.length-1));
-                  student.setMiddleName(middle);
-                }
+                student.setFirstName(String.join(" ", java.util.Arrays.copyOfRange(nameParts, 1, nameParts.length)));
+                student.setMiddleName("");
               } else {
                 student.setFirstName(capitalised);
                 student.setLastName("");
                 student.setMiddleName("");
               }
-
-              // Store the original sequence for official documents
+              
               student.setFullName(capitalised);
 
               logger.info("Full name (VN): {} {}", student.getFirstName(), student.getLastName());

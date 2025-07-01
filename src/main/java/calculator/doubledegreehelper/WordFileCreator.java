@@ -50,7 +50,6 @@ public class WordFileCreator {
     m.put("{LASTN}",     s.getLastName());
     m.put("{FIRSTNAME}", s.getFirstName());
     m.put("{LASTNAME}",  s.getLastName());
-    m.put("{MIDDLENAME}", s.getMiddleName()==null?"":s.getMiddleName());
     m.put("{NAME}",      s.getFullName());
     m.put("{TITLE}",     s.getTitle()==null?"":s.getTitle().getDisplayName());
     m.put("{BDATE}",     DATE.format(s.getBirthDate()));

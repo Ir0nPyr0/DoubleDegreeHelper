@@ -42,7 +42,7 @@ public class gradeSelectionController {
     @FXML private DatePicker              birthDatePicker, completionDatePicker, deliverDatePicker;
     @FXML private Text                    ectsCounter, safePathText;
     @FXML private TextField               birthPlaceField, chairpersonText, presidentText, matriculationField;
-    @FXML private TextArea                themeField, nameField, middleNameField, lastNameField;
+    @FXML private TextArea                themeField, nameField, lastNameField;
     @FXML private ListView<StudentModule> listViewContainer;
     @FXML private ComboBox<Gender>        genderComboBox;
     @FXML private Button                  backToHomeButton, createButton, safePathButton, charDropdownButton, autoSelectionButton;
@@ -76,7 +76,7 @@ public class gradeSelectionController {
         }
 
         List<TextInputControl> inputs = List.of(
-            nameField, middleNameField, lastNameField, themeField,
+            nameField, lastNameField, themeField,
             birthPlaceField, matriculationField,
             chairpersonText, presidentText
         );
@@ -94,20 +94,14 @@ public class gradeSelectionController {
             });
         }
 
-        // --- Update Student object when text changes -----------------------
         nameField.textProperty().addListener((obs, o, n) -> {
             Student s = AppManager.getStudent();
             if (s != null) s.setFirstName(n.trim());
-        });
-        middleNameField.textProperty().addListener((obs, o, n) -> {
-            Student s = AppManager.getStudent();
-            if (s != null) s.setMiddleName(n.trim());
         });
         lastNameField.textProperty().addListener((obs, o, n) -> {
             Student s = AppManager.getStudent();
             if (s != null) s.setLastName(n.trim());
         });
-        // NEW: keep Student.birthPlace in sync with UI
         birthPlaceField.textProperty().addListener((obs, o, n) -> {
             Student s = AppManager.getStudent();
             if (s != null) s.setBirthPlace(n.trim());
@@ -118,7 +112,6 @@ public class gradeSelectionController {
         presidentText.textProperty().addListener((obs, o, n) -> {
             AppManager.setPresident(n.trim());
         });
-        // -------------------------------------------------------------------
 
         genderComboBox.setItems(FXCollections.observableArrayList(Gender.MALE, Gender.FEMALE));
         genderComboBox.setCellFactory(cb -> new ListCell<>() {
@@ -167,7 +160,6 @@ public class gradeSelectionController {
         if (s==null || comps==null) return;
 
         nameField.setText(s.getFirstName());
-        middleNameField.setText(s.getMiddleName());
         lastNameField.setText(s.getLastName());
         genderComboBox.setValue(s.getGender());
         themeField.setText(s.getTheme());
@@ -283,7 +275,6 @@ public class gradeSelectionController {
 
         List<ModuleItem> active = AppManager.getHhnModules().stream()
             .filter(item ->
-                // finde dazugehörige StudentModule in der ListView
                 listViewContainer.getItems().stream()
                     .filter(m -> !m.isPlaceholder() && m.isActive())
                     .anyMatch(m -> normalize(m.getName())
@@ -374,12 +365,10 @@ public class gradeSelectionController {
     }
 
     private void handleAutoSelection(ActionEvent ev) {
-        // Re-run the SelectorAlgorithm and refresh the ListView
         refresh();
     }
 
     private void buildCharPopup(){
-        // Groß- und Kleinbuchstaben getrennt
         String upper = "ÁÀẢÃẠĂẮẰẲẴẶÂẤẦẨẪẬ" +
             "ÉÈẺẼẸÊẾỀỂỄỆ" +
             "ÍÌỈĨỊ" +
@@ -416,7 +405,6 @@ public class gradeSelectionController {
         });
     }
 
-    // Hilfsmethode: Baut ein GridPane für eine gegebene Zeichenkette
     private GridPane createCharGrid(String chars){
         GridPane grid = new GridPane();
         grid.setHgap(8);

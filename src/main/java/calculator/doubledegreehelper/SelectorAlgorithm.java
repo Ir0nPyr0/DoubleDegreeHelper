@@ -26,18 +26,15 @@ public class SelectorAlgorithm {
                                               int target) {
     List<StudentModule> hnModules = getComparableModules(student, compareModules);
 
-    // --- 0) Separate mandatory modules (Master Thesis & Master Colloquium) --------------------
     List<StudentModule> mandatory = hnModules.stream()
         .filter(m -> {
           String n = m.getName().toLowerCase(java.util.Locale.ROOT);
           return n.contains("thesis") || n.contains("colloquium");
         })
         .collect(Collectors.toList());
-    // Remove mandatory ones from the pool so they are not chosen twice.
     hnModules.removeAll(mandatory);
 
     int mandatoryEcts = mandatory.stream().mapToInt(StudentModule::getEcts).sum();
-    // Remaining ECTS that still need to be filled.
     int remainingTarget = Math.max(0, target - mandatoryEcts);
 
     // -----------------------------------------------------------------------------------------
@@ -75,7 +72,6 @@ public class SelectorAlgorithm {
         return result;
       }
     }
-    // If nothing fits (should not happen), return at least the mandatory modules.
     return new ArrayList<>(mandatory);
   }
 

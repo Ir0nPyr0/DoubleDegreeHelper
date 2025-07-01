@@ -128,10 +128,6 @@ public class Student {
     return grade / counter;
   }
 
-  /**
-   * Returns the full original name (family-middle-given order for Vietnamese names).
-   * Falls back to firstName + " " + lastName if not explicitly set.
-   */
   public String getFullName() {
     if (fullName != null && !fullName.isBlank()) return fullName;
 
