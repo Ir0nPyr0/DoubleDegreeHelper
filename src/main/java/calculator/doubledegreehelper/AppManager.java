@@ -139,8 +139,7 @@ public class AppManager {
     return president;
   }
 
-  /* === Neue Hilfsmethode für Standard-Verzeichnis der Word-Dateien === */
   public static String getDefaultWordDir() {
-    return java.nio.file.Paths.get(System.getProperty("user.home"), "DoubleDegreeHelper").toString();
+    return java.nio.file.Paths.get(System.getProperty("user.home"), "DoubleDegreeHelperData").toString();
   }
 }
