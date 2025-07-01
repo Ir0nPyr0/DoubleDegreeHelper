@@ -20,12 +20,6 @@ public class App extends Application {
     @Override
     public void stop() throws Exception {
         super.stop();
-        /*
-         * Beim Beenden der Anwendung wird der aktuelle Bearbeitungsstand
-         * (Module, Zuordnungen, Kategorien) im Benutzerdaten-Verzeichnis
-         * «DoubleDegreeHelper» unter dem Dateinamen «modules.dat» gespeichert.
-         * So bleibt der Stand nach einem Neustart erhalten.
-         */
-        //saveHandler.saveData();
+        saveHandler.saveData();
     }
 }

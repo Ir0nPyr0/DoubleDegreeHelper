@@ -60,11 +60,10 @@ public class TranscriptPdfReader {
       }
     }
 
-    // --- Derive first and last names --------------------------------------
     String extractedFirst = fullName;
     String extractedLast  = "";
     if (fullName.contains(",")) {
-      // Pattern: LAST, FIRST MIDDLE -> take parts around comma
+      
       String[] parts = fullName.split(",", 2);
       extractedLast  = parts[0].trim();
       extractedFirst = parts[1].trim();

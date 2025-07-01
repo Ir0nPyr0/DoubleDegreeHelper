@@ -26,11 +26,9 @@
                <children>
                   <VBox alignment="TOP_CENTER" spacing="5.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
 
-                     <!-- Oberer Bereich: Name/Thema und Geburtsdaten -->
                      <VBox spacing="5.0">
                         <children>
 
-                           <!-- Name / Thema HBox -->
                            <HBox alignment="CENTER_LEFT" spacing="10">
                               <children>
                                  <Region />
@@ -38,7 +36,6 @@
                                     <opaqueInsets>
                                        <Insets />
                                     </opaqueInsets></Button>
-                                 <!-- Dropdown für Gender -->
                                  <ComboBox fx:id="genderComboBox" minWidth="90.0" prefWidth="120.0" promptText="M/W">
                                     <items>
                                        <FXCollections fx:factory="observableArrayList">
@@ -50,13 +47,10 @@
                                        <Insets left="10.0" />
                                     </HBox.margin>
                                  </ComboBox>
-                                 <!-- Ende Gender-Dropdown -->
-
-                                 <!-- Vorname -->
+                                 
                                  <Text fx:id="nameText" text="Vorname:" />
                                  <TextArea fx:id="nameField" maxWidth="350.0" minWidth="90.0" prefRowCount="2" promptText="Vorname" wrapText="true" HBox.hgrow="NEVER" />
 
-                                 <!-- Mittelname -->
                                  <Text fx:id="middleNameText" text="Mittelname:">
                                     <HBox.margin>
                                        <Insets left="10.0" />
@@ -64,7 +58,6 @@
                                  </Text>
                                  <TextArea fx:id="middleNameField" maxWidth="350.0" minWidth="90.0" prefRowCount="2" promptText="Mittelname" wrapText="true" HBox.hgrow="NEVER" />
 
-                                 <!-- Nachname (neu) -->
                                  <Text fx:id="lastNameText" text="Nachname:">
                                     <HBox.margin>
                                        <Insets left="10.0" />
@@ -72,7 +65,6 @@
                                  </Text>
                                  <TextArea fx:id="lastNameField" maxWidth="350.0" minWidth="90.0" prefRowCount="2" promptText="Nachname" wrapText="true" HBox.hgrow="NEVER" />
 
-                                 <!-- Thema -->
                                  <Text fx:id="themeText" text="Thema:">
                                     <HBox.margin>
                                        <Insets left="15.0" right="5.0" />
@@ -98,7 +90,6 @@
                               </padding>
                            </HBox>
 
-                           <!-- Geburtsdaten HBox: DatePicker statt TextField -->
                            <HBox alignment="CENTER_LEFT" spacing="10">
                               <children>
                                  <Text text="Geboren am:">
@@ -153,10 +144,8 @@
                         </padding>
                      </VBox>
 
-                     <!-- ListView füllt den verbleibenden Platz -->
                      <ListView fx:id="listViewContainer" VBox.vgrow="ALWAYS" />
 
-                     <!-- Steuer-Buttons -->
                      <HBox alignment="CENTER" spacing="20">
                         <children>
                            <Button fx:id="autoSelectionButton" text="Auto. Auswahl" />
@@ -166,7 +155,6 @@
                         </children>
                      </HBox>
 
-                     <!-- Hinweistext -->
                      <Text fx:id="safePathText" text="Speicherort zuerst festlegen!">
                         <VBox.margin>
                            <Insets bottom="5.0" />

@@ -27,8 +27,6 @@ public class WordFileCreator {
   private static List<StudentModule> modules = new ArrayList<>();
 
   public static void createWord(Path dest, Student stud, List<StudentModule> studentModule) throws IOException {
-    // Create a sub-directory inside the chosen destination that is named after the student number.
-    // All generated Word files will be placed inside this folder.
     Path studentDir = dest.resolve(String.valueOf(stud.getNumber()));
     Files.createDirectories(studentDir);
 
@@ -71,7 +69,6 @@ public class WordFileCreator {
       List<XWPFRun> runs = p.getRuns();
       if (runs.isEmpty()) continue;
 
-      // 1) Gesamten Absatztext und Längen der Runs bestimmen
       StringBuilder fullText = new StringBuilder();
       int[] runLens = new int[runs.size()];
       for (int i = 0; i < runs.size(); i++) {
@@ -82,7 +79,6 @@ public class WordFileCreator {
       }
       String paragraphText = fullText.toString();
 
-      // 2) Jeden Platzhalter nacheinander ersetzen
       for (Map.Entry<String,String> entry : repl.entrySet()) {
         String placeholder = entry.getKey();
         String replacement = entry.getValue();
@@ -90,7 +86,6 @@ public class WordFileCreator {
         int idx = paragraphText.indexOf(placeholder);
         if (idx < 0) continue;
 
-        // 3) Errechne Start-Run und Offset
         int charCount = 0, startRun = 0, startOff = 0;
         for (int i = 0; i < runLens.length; i++) {
           if (charCount + runLens[i] > idx) {
@@ -101,7 +96,6 @@ public class WordFileCreator {
           charCount += runLens[i];
         }
 
-        // 4) Errechne End-Run und Offset
         int endIdx = idx + placeholder.length();
         charCount = 0;
         int endRun = 0, endOff = 0;
@@ -114,41 +108,33 @@ public class WordFileCreator {
           charCount += runLens[i];
         }
 
-        // 5) Texte aus Start- und End-Run holen
         String startText = runs.get(startRun).getText(0);
         String before    = startText.substring(0, startOff);
 
         String endText = runs.get(endRun).getText(0);
         String after   = endText.substring(endOff);
 
-        // 6) Ersetze im ersten Run und behalte dessen Formatierung
         XWPFRun firstRun = runs.get(startRun);
         firstRun.setText(before + replacement + after, 0);
 
-        // 7) Lösche alle Runs zwischen startRun+1 und endRun
         for (int i = endRun; i > startRun; i--) {
           p.removeRun(i);
         }
 
-        // 8) Aktualisiere paragraphText, falls Du mehrfach ersetzen willst
         paragraphText = paragraphText.substring(0, idx)
             + replacement
             + paragraphText.substring(endIdx);
-        // und passe runLens[startRun] an (optional bei mehreren Vorkommen pro Absatz)
         runLens[startRun] = (before + replacement + after).length();
       }
     }
   }
 
-  /* Find a template file in the user's DoubleDegreeHelper dir. Returns null if not found */
   private static Path findTemplatePath(String baseName) {
     Path dir = java.nio.file.Paths.get(System.getProperty("user.home"), "DoubleDegreeHelperData");
     try {
-      // 1) Placeholder variant {NUMBER}-<baseName>
       Path p1 = dir.resolve("{NUMBER}" + baseName);
       if (java.nio.file.Files.exists(p1)) return p1;
 
-      // 2) Any file that ends with baseName (e.g. 215021-<baseName>)
       try (java.util.stream.Stream<Path> s = java.nio.file.Files.list(dir)) {
         return s.filter(p -> p.getFileName().toString().endsWith(baseName))
                 .findFirst()
@@ -165,8 +151,7 @@ public class WordFileCreator {
 
     if (diskTpl != null && Files.exists(diskTpl)) {
       replaceAttribute(diskTpl, "-DiplomaSupplement-1.docx", num);
-    } else {
-      // Fallback to classpath resource (works in JAR/EXE)
+    } else {  
       var tplStream = WordFileCreator.class.getResourceAsStream("/calculator/outputTemplate/{NUMBER}-DiplomaSupplement-1.docx");
       if (tplStream == null) {
         throw new FileNotFoundException("Template '/calculator/outputTemplate/{NUMBER}-DiplomaSupplement-1.docx' not found in classpath");
@@ -212,7 +197,6 @@ public class WordFileCreator {
     }
   }
 
-  // New overload that works directly with an InputStream (templates loaded from resources)
   public static void replaceAttribute(InputStream tplStream, String fileName, String num) throws IOException {
     Files.createDirectories(destination);
     try (InputStream in = tplStream; XWPFDocument doc = new XWPFDocument(in)) {
@@ -324,16 +308,14 @@ public class WordFileCreator {
       CTRow catCtRow = (CTRow) catTemplateRow.getCtRow().copy();
       CTRow modCtRow = (CTRow) modTemplateRow.getCtRow().copy();
 
-      templateTable.removeRow(modRowIdx); // remove module row first (lower index afterwards!)
+      templateTable.removeRow(modRowIdx);
       templateTable.removeRow(catRowIdx);
 
-      // 2) Group the student modules by category.
       Map<Category, List<StudentModule>> byCategory = new LinkedHashMap<>();
       for (StudentModule m : modules) {
         byCategory.computeIfAbsent(m.getCategory(), k -> new ArrayList<>()).add(m);
       }
 
-      // 3) Sort the categories by priority (0 = top, higher numbers below)
       List<Map.Entry<Category, List<StudentModule>>> sortedCats = byCategory.entrySet()
           .stream()
           .sorted(Comparator.comparingInt(e -> {
@@ -342,23 +324,19 @@ public class WordFileCreator {
           }))
           .toList();
 
-      // 4) Iterate over categories and create rows.
       for (Map.Entry<Category, List<StudentModule>> entry : sortedCats) {
         Category cat = entry.getKey();
         List<StudentModule> catModules = entry.getValue();
 
-        // Compute statistics required for placeholders.
         double avgGrade = catModules.stream().mapToDouble(StudentModule::getGrade).average().orElse(0.0);
         int totalEcts  = catModules.stream().mapToInt(StudentModule::getEcts).sum();
 
-        // Determine the highest year present (ignore year 0 which indicates 'not set').
         int year = catModules.stream()
             .mapToInt(StudentModule::getYear)
             .filter(y -> y > 0)
             .max()
             .orElse(0);
 
-        // For the highest year, decide semester label with priority: winter (wt) > summer (st).
         String sw;
         if (year > 0) {
           boolean hasWinter = catModules.stream()
@@ -367,25 +345,18 @@ public class WordFileCreator {
               .anyMatch(m -> m.getYear() == year && (m.getSemester() == Semester.SUMMER || m.getSemester() == Semester.SUMWIN));
           if (hasWinter)      sw = "wt";
           else if (hasSummer) sw = "st";
-          else                sw = "s/w";  // Fallback: unbekanntes Semester -> Winter
+          else                sw = "s/w";
         } else {
-          // No year information – fall back to mixed logic
           boolean hasWinter = catModules.stream()
               .anyMatch(m -> m.getSemester() == Semester.WINTER || m.getSemester() == Semester.SUMWIN);
           boolean hasSummer = catModules.stream()
               .anyMatch(m -> m.getSemester() == Semester.SUMMER || m.getSemester() == Semester.SUMWIN);
 
-          /*
-           * Wenn sowohl Winter- als auch Sommersemester vertreten sind, soll standardmäßig
-           * "wt" (Winter) ausgegeben werden. Dadurch wird vermieden, dass in der Word-Vorlage
-           * "s/w" erscheint, obwohl der Wintersemester-Eintrag in der Regel dominieren soll.
-           */
-          if (hasWinter)      sw = "wt";  // Winter hat Priorität
-          else if (hasSummer) sw = "st";  // nur Sommer vorhanden
-          else                sw = "s/w"; // kein Semester gesetzt
+          if (hasWinter)      sw = "wt";
+          else if (hasSummer) sw = "st";
+          else                sw = "s/w";
         }
 
-        // Build replacement map for category row – include several alias placeholders
         Map<String, String> catMap = new HashMap<>();
         String catName = cat == null ? "" : cat.getName();
         String avgStr  = String.format(Locale.US, "%.1f", avgGrade);
@@ -404,12 +375,10 @@ public class WordFileCreator {
         catMap.put("{Y}",  yearStr);
         catMap.put("{YEAR}", yearStr);
 
-        // Duplicate template row, REPLACE placeholders, then insert.
         XWPFTableRow newCatRow = new XWPFTableRow((CTRow) catCtRow.copy(), templateTable);
         replaceRowPlaceholders(newCatRow, catMap);
         templateTable.addRow(newCatRow);
 
-        // 3b) Sort modules so that Colloquium first, Thesis second, others afterwards.
         List<StudentModule> sortedModules = new ArrayList<>(catModules);
         sortedModules.sort(Comparator.comparingInt(m -> {
             String n = m.getName().toLowerCase(Locale.ROOT);
@@ -418,7 +387,6 @@ public class WordFileCreator {
             return 2;
         }));
 
-        // 3c) Add module rows.
         for (StudentModule mod : sortedModules) {
           Map<String, String> modMap = new HashMap<>();
           String gradeStr = String.format(Locale.US, "%.1f", mod.getGrade());
@@ -427,10 +395,6 @@ public class WordFileCreator {
           switch (mod.getSemester()) {
             case SUMMER -> semDisplay = "st";
             case WINTER  -> semDisplay = "wt";
-            /*
-             * Fallback für unbekanntes Semester (z. B. SUMWIN oder null). Anstatt "s/w"
-             * wird nun "wt" ausgegeben, damit die Vorlage konsistent bleibt.
-             */
             default       -> semDisplay = "wt";
           }
           String yearMod = mod.getYear()==0? "" : String.valueOf(mod.getYear());
@@ -450,12 +414,11 @@ public class WordFileCreator {
           XWPFTableRow newModRow = new XWPFTableRow((CTRow) modCtRow.copy(), templateTable);
           replaceRowPlaceholders(newModRow, modMap);
 
-          // If this is the thesis row, append topic paragraph inside the same first cell.
           if (mod.getName().toLowerCase(Locale.ROOT).contains("thesis") && student.getTheme() != null) {
             XWPFTableCell firstCell = newModRow.getCell(0);
             if (firstCell != null) {
               XWPFParagraph topicPara = firstCell.addParagraph();
-              topicPara.setIndentationLeft(550); // slight indent (~0.5 cm)
+              topicPara.setIndentationLeft(550);
               XWPFRun run = topicPara.createRun();
               run.setItalic(true);
               run.setText(student.getTheme());
@@ -465,10 +428,8 @@ public class WordFileCreator {
           templateTable.addRow(newModRow);
         }
 
-        // 3d) (Removed separate thesis topic row – now included inside thesis module row.)
       }
 
-      // 4) Write changes back to the document.
       try (FileOutputStream out = new FileOutputStream(certPath.toFile())) {
         doc.write(out);
       }
@@ -479,10 +440,8 @@ public class WordFileCreator {
     }
   }
 
-  // Helper that replaces placeholders inside a single table row.
   private static void replaceRowPlaceholders(XWPFTableRow row, Map<String, String> repl) {
     for (XWPFTableCell cell : row.getTableCells()) {
-      // --- 1) Versuche zunächst die Run-basierte Ersetzung wie bisher ---
       replaceInParagraphs(cell.getParagraphs(), repl);
       replaceInTables(cell.getTables(), repl);
       String joined = cell.getText();
@@ -499,7 +458,6 @@ public class WordFileCreator {
         for (Map.Entry<String, String> e : repl.entrySet()) {
           newText = newText.replace(e.getKey(), Objects.toString(e.getValue(), ""));
         }
-        // Inhalt der Zelle überschreiben
         cell.removeParagraph(0);
         XWPFParagraph para = cell.addParagraph();
         para.createRun().setText(newText, 0);

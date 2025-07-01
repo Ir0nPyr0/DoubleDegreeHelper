@@ -29,7 +29,6 @@ public class homeController {
         startButton.setOnAction(this::handleStartButtonAction);
         settingsButton.setOnAction(this::handleSettingsButtonAction);
 
-        /* Buttons öffnen jetzt die Word-Templates in C:/Programme/DegreeCalculator */
         transcriptEditButton.setOnAction(this::handleTranscriptButtonAction);
         diplomaEditButton   .setOnAction(this::handleDiplomaButtonAction);
         certificateEditButton.setOnAction(this::handleCertificateButtonAction);
@@ -45,15 +44,12 @@ public class homeController {
 
     private static final Path TEMPLATE_DIR = Path.of(AppManager.getDefaultWordDir());
 
-    // Kopiert (falls nötig) die Vorlage in das feste Verzeichnis und öffnet sie dort.
     private void openTemplate(String resourcePath, String fileName) {
         try {
-            // Stelle sicher, dass Zielordner existiert
             Files.createDirectories(TEMPLATE_DIR);
 
             Path dest = TEMPLATE_DIR.resolve(fileName);
 
-            // Falls Datei noch nicht vorhanden, aus der Ressource kopieren
             if (Files.notExists(dest)) {
                 try (InputStream in = homeController.class.getResourceAsStream(resourcePath)) {
                     if (in == null) {
@@ -64,10 +60,7 @@ public class homeController {
                     Files.copy(in, dest);
                 }
             }
-
-            // Öffne die Datei mit dem Standardprogramm
             Desktop.getDesktop().open(dest.toFile());
-
         } catch (IOException ex) {
             new Alert(Alert.AlertType.ERROR, "Datei konnte nicht geöffnet werden:\n" + ex.getMessage())
                 .showAndWait();
