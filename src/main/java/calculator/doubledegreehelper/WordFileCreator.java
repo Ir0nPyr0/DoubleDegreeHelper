@@ -250,7 +250,20 @@ public class WordFileCreator {
   }
 
   public static String getFullGrade(float grade, boolean mode) {
-    double g = grade / 10.0;
+    double g;
+    if (modules != null && !modules.isEmpty()) {
+      int ectsSum = modules.stream().mapToInt(StudentModule::getEcts).sum();
+      if (ectsSum > 0) {
+        double weighted = modules.stream()
+            .mapToDouble(m -> m.getGrade() * m.getEcts())
+            .sum();
+        g = weighted / ectsSum;
+      } else {
+        g = 0.0;
+      }
+    } else {
+      g = grade / 10.0;
+    }
     String desc;
     if      (g <= 1.5) desc = "very good";
     else if (g <= 2.5) desc = "good";
@@ -258,11 +271,14 @@ public class WordFileCreator {
     else if (g <= 4.0) desc = "sufficient";
     else               desc = "non sufficient";
 
+    // Round DOWN (Abschneiden) statt normales Runden, damit z. B. 1.387 -> 1.3 bzw. 1.38
+    double g1d = Math.floor(g * 10.0)  / 10.0;   // eine Nachkommastelle
+    double g2d = Math.floor(g * 100.0) / 100.0;  // zwei Nachkommastellen
+
     if (mode) {
-      return String.format(Locale.US, "%s (%.1f)", desc, g);
-    }
-    else {
-      return String.format(Locale.US, "%.2f (%s)", student.getCalculateTotalGrande(), desc);
+      return String.format(Locale.US, "%s (%.1f)", desc, g1d);
+    } else {
+      return String.format(Locale.US, "%.2f (%s)", g2d, desc);
     }
   }
 

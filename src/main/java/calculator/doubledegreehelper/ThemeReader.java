@@ -35,6 +35,26 @@ public class ThemeReader {
       Integer idxTopic      = col.get("Thesis Topic");
       Integer idxGender     = col.get("Gender");
       Integer idxDeliver     = col.get("Deliver date");
+      Integer idxBirthPlace = col.get("Birth place (in English) (City, Country)");
+      Integer idxFullNameVN = col.get("Full name in\nVietnamese\n(Family name - Middle name - First name)");
+      if (idxBirthPlace == null) {
+        for (Map.Entry<String,Integer> e : col.entrySet()) {
+          String key = e.getKey().replace("\n", " ").toLowerCase();
+          if (key.contains("birth place")) {
+            idxBirthPlace = e.getValue();
+            break;
+          }
+        }
+      }
+      if (idxFullNameVN == null) {
+        for (Map.Entry<String,Integer> e : col.entrySet()) {
+          String key = e.getKey().replace("\n", " ").toLowerCase();
+          if (key.contains("full name") && key.contains("vietnamese")) {
+            idxFullNameVN = e.getValue();
+            break;
+          }
+        }
+      }
 
       if (idxVguId == null) {
         throw new IOException("Spalte 'VGU ID' nicht gefunden");
@@ -84,6 +104,37 @@ public class ThemeReader {
             String g = deliverCell.getStringCellValue();
             student.setDeliverDate(g);
             logger.info("DeliverDate: " + student.getDeliverDate());
+          }
+        }
+
+        if (idxBirthPlace != null) {
+          Cell birthPlaceCell = row.getCell(idxBirthPlace);
+          if (birthPlaceCell != null && birthPlaceCell.getCellType() == CellType.STRING) {
+            String bpRaw = birthPlaceCell.getStringCellValue().trim();
+            if (!bpRaw.isEmpty()) {
+              String bp = bpRaw;
+              int idx = bpRaw.indexOf(',');
+              if (idx >= 0) bp = bpRaw.substring(0, idx).trim();
+
+              student.setBirthPlace(bp);
+              logger.info("Birth place:   {}", student.getBirthPlace());
+            }
+          }
+        }
+
+        if (idxFullNameVN != null) {
+          Cell nameCell = row.getCell(idxFullNameVN);
+          if (nameCell != null && nameCell.getCellType() == CellType.STRING) {
+            String rawName = nameCell.getStringCellValue().trim();
+            if (!rawName.isEmpty()) {
+              String capitalised = java.util.Arrays.stream(rawName.split("\\s+"))
+                  .map(part -> part.isEmpty() ? part :
+                      part.substring(0,1).toUpperCase(java.util.Locale.ROOT) +
+                      part.substring(1).toLowerCase(java.util.Locale.ROOT))
+                  .collect(java.util.stream.Collectors.joining(" "));
+              student.setFirstName(capitalised);
+              logger.info("Full name (VN): {}", student.getFirstName());
+            }
           }
         }
         break;
