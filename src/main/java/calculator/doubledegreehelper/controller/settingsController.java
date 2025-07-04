@@ -18,6 +18,7 @@ import javafx.scene.layout.Priority;
 import javafx.util.Callback;
 import javafx.util.StringConverter;
 import org.controlsfx.control.CheckComboBox;
+import javafx.scene.layout.Region;
 
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
@@ -270,8 +271,15 @@ public class settingsController {
             if (!isHhn) {
                 checkCombo = new CheckComboBox<>(otherList);
                 checkCombo.setConverter(new StringConverter<ModuleItem>() {
-                    @Override public String toString(ModuleItem item) { return item == null ? "" : item.toString(); }
-                    @Override public ModuleItem fromString(String s) { return null; }
+                    @Override
+                    public String toString(ModuleItem item) {
+                        return item == null ? "" : item.getModulName();
+                    }
+
+                    @Override
+                    public ModuleItem fromString(String s) {
+                        return null;
+                    }
                 });
                 checkCombo.getCheckModel().getCheckedItems().addListener((ListChangeListener<ModuleItem>) ch -> {
                     if (updating) return;
@@ -282,6 +290,8 @@ public class settingsController {
                             ch.getRemoved().forEach(m -> AppManager.removeComparableModule(it, m));
                         }
                     }
+                    checkCombo.setPrefWidth(Region.USE_COMPUTED_SIZE);
+                    checkCombo.requestLayout();
                 });
                 container = new HBox(5, semesterBox, numberField, nameField, ectsField, checkCombo, removeBtn);
             } else {

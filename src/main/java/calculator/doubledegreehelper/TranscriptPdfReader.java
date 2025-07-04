@@ -91,8 +91,6 @@ public class TranscriptPdfReader {
 
     String fullOriginalName = fullName.trim();
 
-    /* String[] tokensAll = fullName.trim().split("\\s+"); // unused */
-
     for (String line : lines) {
       line = line.trim();
       if (line.startsWith("Date of Birth")) {

@@ -140,7 +140,7 @@ public class ThemeReader {
                 if (nameParts.length == 2) {
                   student.setFirstName(nameParts[1]);
                   student.setMiddleName("");
-                } else { // >=3
+                } else {
                   student.setFirstName(nameParts[nameParts.length - 1]);
                   student.setMiddleName(String.join(" ", java.util.Arrays.copyOfRange(nameParts, 1, nameParts.length - 1)));
                 }
