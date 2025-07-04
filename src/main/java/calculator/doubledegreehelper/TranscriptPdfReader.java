@@ -51,7 +51,7 @@ public class TranscriptPdfReader {
           if (nxt.isEmpty()) break;
           if (nxt.matches("^(Date of Birth|Place of Birth|Student ID|Intake|Program|Gender)\\b.*"))
             break;
-          sb.append("").append(nxt);
+          sb.append(" ").append(nxt);
         }
         fullName = sb.toString()
             .replaceAll("(?i)Gender\\s+(Female|Male)", "")
@@ -62,16 +62,27 @@ public class TranscriptPdfReader {
 
     String extractedFirst = fullName;
     String extractedLast  = "";
+    String middleName     = "";
+
     if (fullName.contains(",")) {
-      
       String[] parts = fullName.split(",", 2);
-      extractedLast  = parts[0].trim();
-      extractedFirst = parts[1].trim();
+      extractedLast = parts[0].trim();
+
+      String[] afterCommaTokens = parts[1].trim().split("\\s+");
+      if (afterCommaTokens.length == 1) {
+        extractedFirst = afterCommaTokens[0];
+      } else if (afterCommaTokens.length >= 2) {
+        extractedFirst = afterCommaTokens[afterCommaTokens.length - 1];
+        middleName = String.join(" ", java.util.Arrays.copyOfRange(afterCommaTokens, 0, afterCommaTokens.length - 1));
+      }
     } else {
       String[] tokens = fullName.split("\\s+");
       if (tokens.length >= 2) {
-        extractedLast = tokens[0];
-        extractedFirst = String.join(" ", java.util.Arrays.copyOfRange(tokens, 1, tokens.length));
+        extractedLast  = tokens[0];
+        extractedFirst = tokens[tokens.length - 1];
+        if (tokens.length > 2) {
+          middleName = String.join(" ", java.util.Arrays.copyOfRange(tokens, 1, tokens.length - 1));
+        }
       }
     }
 
@@ -80,8 +91,7 @@ public class TranscriptPdfReader {
 
     String fullOriginalName = fullName.trim();
 
-    String[] tokensAll = fullName.trim().split("\\s+");
-    String middleName = "";
+    /* String[] tokensAll = fullName.trim().split("\\s+"); // unused */
 
     for (String line : lines) {
       line = line.trim();

@@ -137,8 +137,13 @@ public class ThemeReader {
               if (nameParts.length >= 2) {
                 student.setLastName(nameParts[0]);
 
-                student.setFirstName(String.join(" ", java.util.Arrays.copyOfRange(nameParts, 1, nameParts.length)));
-                student.setMiddleName("");
+                if (nameParts.length == 2) {
+                  student.setFirstName(nameParts[1]);
+                  student.setMiddleName("");
+                } else { // >=3
+                  student.setFirstName(nameParts[nameParts.length - 1]);
+                  student.setMiddleName(String.join(" ", java.util.Arrays.copyOfRange(nameParts, 1, nameParts.length - 1)));
+                }
               } else {
                 student.setFirstName(capitalised);
                 student.setLastName("");

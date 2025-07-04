@@ -30,7 +30,7 @@ public final class SceneManager {
   }
 
   private static Stage primaryStage;
-  private static final double WIDTH = 800, HEIGHT = 550;
+  private static final double WIDTH = 1200, HEIGHT = 650;
 
   private SceneManager() {}
 

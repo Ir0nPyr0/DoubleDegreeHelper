@@ -50,6 +50,7 @@ public class WordFileCreator {
     m.put("{LASTN}",     s.getLastName());
     m.put("{FIRSTNAME}", s.getFirstName());
     m.put("{LASTNAME}",  s.getLastName());
+    m.put("{MIDDLENAME}", s.getMiddleName()==null?"":s.getMiddleName());
     m.put("{NAME}",      s.getFullName());
     m.put("{TITLE}",     s.getTitle()==null?"":s.getTitle().getDisplayName());
     m.put("{BDATE}",     DATE.format(s.getBirthDate()));
@@ -107,10 +108,15 @@ public class WordFileCreator {
           charCount += runLens[i];
         }
 
+        if (endRun >= runs.size()) {
+          continue;
+        }
+
         String startText = runs.get(startRun).getText(0);
         String before    = startText.substring(0, startOff);
 
         String endText = runs.get(endRun).getText(0);
+        if (endOff > endText.length()) endOff = endText.length();
         String after   = endText.substring(endOff);
 
         XWPFRun firstRun = runs.get(startRun);
