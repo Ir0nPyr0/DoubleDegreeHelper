@@ -50,7 +50,7 @@ public class homeController {
     private static final Logger logger = LoggerFactory.getLogger(homeController.class);
 
     @FXML private BorderPane root;
-    @FXML private Button startButton, settingsButton;
+    @FXML private Button settingsButton;
     @FXML private Button transcriptEditButton, diplomaEditButton, certificateEditButton;
     @FXML private Button pdfFolderButton, xlsxFolderButton, refreshButton;
     @FXML private Label pdfFolderLabel, xlsxFolderLabel, statusLabel, countLabel, versionLabel, dropTitle;
@@ -69,7 +69,6 @@ public class homeController {
 
     @FXML
     public void initialize() {
-        startButton.setOnAction(this::handleStartButtonAction);
         settingsButton.setOnAction(this::handleSettingsButtonAction);
         transcriptEditButton.setOnAction(this::handleTranscriptButtonAction);
         diplomaEditButton   .setOnAction(this::handleDiplomaButtonAction);
@@ -458,10 +457,6 @@ public class homeController {
     }
 
     // ------------------------------------------------------------------ bisherige Aktionen
-
-    private void handleStartButtonAction(ActionEvent event) {
-        SceneManager.switchTo(SceneManager.View.GRADEFILE);
-    }
 
     private void handleSettingsButtonAction(ActionEvent event) {
         SceneManager.switchTo(SceneManager.View.SETTINGS);

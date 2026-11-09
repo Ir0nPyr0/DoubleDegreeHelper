@@ -47,7 +47,13 @@ public class gradeSelectionController {
     @FXML private DatePicker              birthDatePicker, completionDatePicker, deliverDatePicker;
     @FXML private Text                    ectsCounter, safePathText;
     @FXML private TextField               birthPlaceField, chairpersonText, presidentText, matriculationField;
-    @FXML private TextArea                themeField, nameField, middleNameField, lastNameField;
+    @FXML private TextArea                themeField;
+    @FXML private TextField               nameField, middleNameField, lastNameField;
+    @FXML private Label                   studentTitle, studentSubtitle, moduleHint;
+    @FXML private Text                    moduleCountText, avgGradeText;
+    @FXML private VBox                    ectsChip;
+    @FXML private TitledPane              unknownPane;
+    @FXML private ListView<StudentModule> unknownListView;
     @FXML private ListView<StudentModule> listViewContainer;
     @FXML private ComboBox<Gender>        genderComboBox;
     @FXML private Button                  backToHomeButton, createButton, safePathButton, charDropdownButton, autoSelectionButton;
@@ -70,7 +76,7 @@ public class gradeSelectionController {
 
         if (!saved.isBlank() && defaultDir.isDirectory()) {
             AppManager.setSavePath(saved);
-            safePathText.setText("Pfad festgelegt: " + saved);
+            safePathText.setText(saved);
             safePathText.setVisible(true);
             createButton.setDisable(false);
         } else {
@@ -100,14 +106,22 @@ public class gradeSelectionController {
         nameField.textProperty().addListener((obs, o, n) -> {
             Student s = AppManager.getStudent();
             if (s != null) s.setFirstName(n.trim());
+            updateHeader();
+        });
+        themeField.textProperty().addListener((obs, o, n) -> {
+            Student s = AppManager.getStudent();
+            if (s != null && n != null) s.setTheme(n.trim());
+            updateHeader();
         });
         middleNameField.textProperty().addListener((obs, o, n) -> {
             Student s = AppManager.getStudent();
             if (s != null) s.setMiddleName(n.trim());
+            updateHeader();
         });
         lastNameField.textProperty().addListener((obs, o, n) -> {
             Student s = AppManager.getStudent();
             if (s != null) s.setLastName(n.trim());
+            updateHeader();
         });
         birthPlaceField.textProperty().addListener((obs, o, n) -> {
             Student s = AppManager.getStudent();
@@ -210,68 +224,35 @@ public class gradeSelectionController {
             .collect(Collectors.toSet());
         validHhn.forEach(m->m.setActive(bestNames.contains(normalize(m.getName()))));
 
-        ObservableList<StudentModule> items = FXCollections.observableArrayList();
-        items.addAll(validHhn);
-        items.addAll(unknown);
-        items.sort(Comparator
-            .comparing(StudentModule::isPlaceholder)
-            .thenComparingDouble(StudentModule::getGrade)
-            .thenComparing(StudentModule::getName)
-        );
+        Comparator<StudentModule> byGrade = Comparator
+            .comparingDouble(StudentModule::getGrade)
+            .thenComparing(StudentModule::getName);
+        ObservableList<StudentModule> items = FXCollections.observableArrayList(validHhn);
+        items.sort(byGrade);
         listViewContainer.setItems(items);
 
-        listViewContainer.setCellFactory(lv->new ListCell<>() {
-            private final CheckBox cb     = new CheckBox();
-            private final Label    lblN   = new Label();
-            private final Label    lblE   = new Label();
-            private final Label    lblG   = new Label();
-            private final Region   spacer = new Region();
-            private final HBox     hbox   = new HBox(8, cb, lblN, spacer, lblE, lblG);
-            {
-                HBox.setHgrow(spacer, Priority.ALWAYS);
-                cb.setOnAction(e->{
-                    StudentModule m = getItem();
-                    if (m!=null && !m.isPlaceholder()) {
-                        boolean sel = cb.isSelected();
-                        m.setActive(sel);
-                        System.out.println((sel?"Modul aktiviert:   ":"Modul deaktiviert: ") + m.getName());
-                        updateEctsCounter();
-                        updateStudentHhnModules();
-                    }
-                });
-            }
-            @Override protected void updateItem(StudentModule m, boolean empty){
-                super.updateItem(m,empty);
-                if(empty||m==null) {
-                    setGraphic(null);
-                } else {
-                    lblN.setText(m.getName());
-                    lblE.setText(String.valueOf(m.getEcts()));
-                    lblG.setText(String.format(" (%.1f)",m.getGrade()));
-                    if(m.isPlaceholder()){
-                        cb.setVisible(false);
-                        lblN.setTextFill(Color.GRAY);
-                        lblE.setTextFill(Color.GRAY);
-                        lblG.setTextFill(Color.GRAY);
-                        hbox.setStyle("-fx-background-color:#e0e0e0;-fx-padding:4;");
-                    } else {
-                        cb.setVisible(true);
-                        cb.setSelected(m.isActive());
-                        lblN.setTextFill(Color.BLACK);
-                        lblE.setTextFill(Color.BLACK);
-                        lblG.setTextFill(Color.BLACK);
-                        double g = m.getGrade();
-                        String bg = g<1.5?"#d4edda"
-                            :g<2.5?"#a3d5a1"
-                            :g<3.5?"#fff3cd"
-                            :g<4.5?"#ffe5a1"
-                            :"#f8d7da";
-                        hbox.setStyle("-fx-background-color:"+bg+";-fx-padding:4;");
-                    }
-                    setGraphic(hbox);
-                }
+        ObservableList<StudentModule> unknownItems = FXCollections.observableArrayList(unknown);
+        unknownItems.sort(byGrade);
+        unknownListView.setItems(unknownItems);
+        unknownListView.setCellFactory(lv -> new ModuleCell());
+        unknownPane.setText("Nicht zugeordnet (" + unknownItems.size() + ") · in den Einstellungen keinem HHN-Modul zugewiesen");
+        unknownPane.setVisible(!unknownItems.isEmpty());
+        unknownPane.setManaged(!unknownItems.isEmpty());
+        unknownListView.setPrefHeight(Math.min(6, Math.max(1, unknownItems.size())) * 36 + 4);
+
+        listViewContainer.setCellFactory(lv -> new ModuleCell());
+        // Leertaste schaltet das markierte Modul um
+        listViewContainer.setOnKeyPressed(e -> {
+            StudentModule m = listViewContainer.getSelectionModel().getSelectedItem();
+            if (e.getCode() == javafx.scene.input.KeyCode.SPACE && m != null && !m.isPlaceholder()) {
+                m.setActive(!m.isActive());
+                listViewContainer.refresh();
+                updateEctsCounter();
+                updateStudentHhnModules();
+                e.consume();
             }
         });
+        updateHeader();
 
         updateEctsCounter();
         updateStudentHhnModules();
@@ -293,12 +274,118 @@ public class gradeSelectionController {
         s.setHnModules(active);
     }
 
+    /** Eine Zeile der Modulliste: Haken, Name, Semester/ECTS, Notenpille. */
+    private final class ModuleCell extends ListCell<StudentModule> {
+        private final CheckBox cb    = new CheckBox();
+        private final Label    name  = new Label();
+        private final Label    meta  = new Label();
+        private final Label    grade = new Label();
+        private final HBox     row;
+
+        ModuleCell() {
+            name.getStyleClass().add("module-name");
+            meta.getStyleClass().add("module-meta");
+            grade.getStyleClass().add("grade");
+            name.setMinWidth(0);
+            name.setMaxWidth(Double.MAX_VALUE);
+            HBox.setHgrow(name, Priority.ALWAYS);
+            meta.setMinWidth(Region.USE_PREF_SIZE);
+            grade.setMinWidth(Region.USE_PREF_SIZE);
+            row = new HBox(12, cb, name, meta, grade);
+            row.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+            row.getStyleClass().add("module-row");
+
+            // Ganze Zeile ist klickbar; der Haken selbst nimmt keine Klicks an
+            cb.setMouseTransparent(true);
+            cb.setFocusTraversable(false);
+            row.setOnMouseClicked(e -> {
+                StudentModule m = getItem();
+                if (e.getButton() == MouseButton.PRIMARY && m != null && !m.isPlaceholder()) {
+                    cb.setSelected(!cb.isSelected());
+                    toggle(cb.isSelected());
+                }
+            });
+        }
+
+        private void toggle(boolean sel) {
+            StudentModule m = getItem();
+            if (m == null || m.isPlaceholder()) return;
+            m.setActive(sel);
+            row.getStyleClass().remove("inactive");
+            if (!sel) row.getStyleClass().add("inactive");
+            updateEctsCounter();
+            updateStudentHhnModules();
+        }
+
+        @Override protected void updateItem(StudentModule m, boolean empty) {
+            super.updateItem(m, empty);
+            if (empty || m == null) {
+                setGraphic(null);
+                setTooltip(null);
+                return;
+            }
+            name.setText(m.getName());
+            String sem = m.getSemester() == Semester.SUMMER ? "SoSe" : "WiSe";
+            meta.setText((m.getYear() > 0 ? sem + " " + m.getYear() + "  ·  " : "") + m.getEcts() + " ECTS");
+            grade.setText(String.format(Locale.GERMANY, "%.1f", m.getGrade()));
+            grade.getStyleClass().removeIf(c -> c.startsWith("grade-"));
+            row.getStyleClass().removeAll("inactive", "placeholder");
+            if (m.isPlaceholder()) {
+                cb.setVisible(false);
+                cb.setManaged(true);
+                row.getStyleClass().add("placeholder");
+                grade.getStyleClass().add("grade-none");
+                setTooltip(new Tooltip("Dieses Modul ist in den Einstellungen keinem HHN-Modul zugeordnet."));
+            } else {
+                cb.setVisible(true);
+                cb.setSelected(m.isActive());
+                if (!m.isActive()) row.getStyleClass().add("inactive");
+                grade.getStyleClass().add(gradeClass(m.getGrade()));
+                setTooltip(null);
+            }
+            setGraphic(row);
+        }
+    }
+
+    private static String gradeClass(double g) {
+        return g < 1.5 ? "grade-1" : g < 2.5 ? "grade-2" : g < 3.5 ? "grade-3" : g < 4.5 ? "grade-4" : "grade-5";
+    }
+
+    private void updateHeader() {
+        if (studentTitle == null) return;
+        String full = String.join(" ", java.util.stream.Stream.of(
+                nameField.getText(), middleNameField.getText(), lastNameField.getText())
+            .filter(t -> t != null && !t.isBlank()).map(String::trim).toList());
+        studentTitle.setText(full.isBlank() ? "Student" : full);
+        String nr = matriculationField.getText();
+        String theme = themeField.getText();
+        StringBuilder sub = new StringBuilder();
+        if (nr != null && !nr.isBlank()) sub.append("Matrikelnr. ").append(nr.trim());
+        if (theme != null && !theme.isBlank()) {
+            if (sub.length() > 0) sub.append("   ·   ");
+            sub.append(theme.trim());
+        }
+        studentSubtitle.setText(sub.toString());
+    }
+
     private void updateEctsCounter(){
         int sum = listViewContainer.getItems().stream()
             .filter(m->!m.isPlaceholder()&&m.isActive())
             .mapToInt(StudentModule::getEcts)
             .sum();
         ectsCounter.setText(String.valueOf(sum));
+
+        List<StudentModule> active = listViewContainer.getItems().stream()
+            .filter(m -> !m.isPlaceholder() && m.isActive()).toList();
+        moduleCountText.setText(String.valueOf(active.size()));
+        double weighted = active.stream().mapToDouble(m -> m.getGrade() * m.getEcts()).sum();
+        avgGradeText.setText(sum > 0 ? String.format(Locale.GERMANY, "%.1f", weighted / sum) : "–");
+
+        ectsChip.getStyleClass().removeAll("ok", "warn");
+        ectsChip.getStyleClass().add(sum == 90 ? "ok" : "warn");
+        moduleHint.setText(sum == 90 ? "Genau 90 ECTS ausgewählt"
+            : sum < 90 ? "Noch " + (90 - sum) + " ECTS bis 90"
+            : (sum - 90) + " ECTS über 90");
     }
 
     private void handleBackToHome(ActionEvent ev){
@@ -423,7 +510,7 @@ public class gradeSelectionController {
         File dir = dc.showDialog(w);
         if(dir!=null){
             ExportSettings.setSavePath(dir.getAbsolutePath());
-            safePathText.setText("Pfad festgelegt: "+dir.getAbsolutePath());
+            safePathText.setText(dir.getAbsolutePath());
             safePathText.setVisible(true);
             createButton.setDisable(false);
         }
