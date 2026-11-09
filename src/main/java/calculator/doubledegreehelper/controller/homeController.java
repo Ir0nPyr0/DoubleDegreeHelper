@@ -82,7 +82,7 @@ public class homeController {
         setupExport();
 
         if (StudentRegistry.claimStartupScan() && hasAnyFolder()) {
-            runFolderScan();
+            runFolderScan(true);
         }
     }
 
@@ -246,7 +246,7 @@ public class homeController {
         ButtonType cancel = new ButtonType("Abbrechen", ButtonBar.ButtonData.CANCEL_CLOSE);
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION,
             "Der Student wird aus der Liste entfernt. Die PDF- und XLSX-Dateien bleiben erhalten.\n"
-                + "Ziehst du die PDF später erneut hinein, erscheint er wieder.",
+                + "Mit „Studenten aktualisieren“ oder erneutem Hineinziehen der PDF erscheint er wieder.",
             cancel, delete);
         alert.initOwner(root.getScene().getWindow());
         alert.setTitle("Student löschen");
@@ -302,7 +302,7 @@ public class homeController {
         updateFolderLabels();
         pdfFolderButton.setOnAction(e -> chooseFolder(true));
         xlsxFolderButton.setOnAction(e -> chooseFolder(false));
-        refreshButton.setOnAction(e -> runFolderScan());
+        refreshButton.setOnAction(e -> runFolderScan(false));
 
         refreshButton.disableProperty().bind(StudentRegistry.busyProperty());
         scanIndicator.visibleProperty().bind(StudentRegistry.busyProperty());
@@ -342,17 +342,17 @@ public class homeController {
         if (pdf) StudentRegistry.setPdfFolder(dir.getAbsolutePath());
         else     StudentRegistry.setXlsxFolder(dir.getAbsolutePath());
         updateFolderLabels();
-        runFolderScan();
+        runFolderScan(true);
     }
 
-    private void runFolderScan() {
+    private void runFolderScan(boolean onlyChanged) {
         if (!hasAnyFolder()) {
             statusLabel.setText("Bitte zuerst einen PDF- oder XLSX-Ordner festlegen.");
             return;
         }
         statusLabel.setText("Suche nach neuen Dateien…");
         statusLabel.setTooltip(null);
-        StudentRegistry.scanFoldersAsync(this::showResult);
+        StudentRegistry.scanFoldersAsync(onlyChanged, this::showResult);
     }
 
     private void showResult(StudentRegistry.Result r) {

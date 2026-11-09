@@ -171,8 +171,8 @@ public final class StudentRegistry {
 
   /**
    * Entfernt einen Studenten aus der Liste. Die Dateien selbst bleiben unangetastet.
-   * Der Ordner-Scan nimmt ihn nicht wieder auf (Dateien sind als bekannt markiert);
-   * erneutes Hineinziehen der PDF fügt ihn wieder hinzu. Eine verknüpfte XLSX wird
+   * Der automatische Scan beim Start nimmt ihn nicht wieder auf; „Studenten aktualisieren“
+   * oder erneutes Hineinziehen der PDF fügt ihn wieder hinzu. Eine verknüpfte XLSX wird
    * vorgemerkt, damit sie dann automatisch wieder zugeordnet wird.
    */
   public static void remove(StudentRecord rec) {
@@ -187,8 +187,12 @@ public final class StudentRegistry {
 
   // ---------------------------------------------------------------- Einlesen
 
-  /** Alle PDF/XLSX in den konfigurierten Ordnern einlesen, die neu oder geändert sind. */
-  public static void scanFoldersAsync(Consumer<Result> onDone) {
+  /**
+   * PDF/XLSX in den konfigurierten Ordnern einlesen.
+   * @param onlyChanged true beim Programmstart (nur neue/geänderte Dateien),
+   *                    false bei „Studenten aktualisieren“ (alles, auch gelöschte Studenten kommen zurück)
+   */
+  public static void scanFoldersAsync(boolean onlyChanged, Consumer<Result> onDone) {
     List<String> folders = List.of(getPdfFolder(), getXlsxFolder());
     submit(() -> {
       List<Path> files = new ArrayList<>();
@@ -196,7 +200,7 @@ public final class StudentRegistry {
         if (folder.isBlank()) continue;
         files.addAll(collect(List.of(Path.of(folder))));
       }
-      return files.stream().filter(StudentRegistry::isChanged).toList();
+      return onlyChanged ? files.stream().filter(StudentRegistry::isChanged).toList() : files;
     }, onDone);
   }
 
