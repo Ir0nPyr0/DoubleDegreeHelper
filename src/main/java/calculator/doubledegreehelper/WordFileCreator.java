@@ -261,13 +261,14 @@ public class WordFileCreator {
     else if (g <= 4.0) desc = "sufficient";
     else               desc = "non sufficient";
 
-    double g1d = Math.floor(g * 10.0)  / 10.0;
-    double g2d = Math.floor(g * 100.0) / 100.0;
+    // Truncate to one decimal place (German grading convention: no rounding).
+    // The small epsilon guards against floating point artefacts like 2.2999999 for 2.3.
+    double g1d = Math.floor(g * 10.0 + 1e-9) / 10.0;
 
     if (mode) {
       return String.format(Locale.US, "%s (%.1f)", desc, g1d);
     } else {
-      return String.format(Locale.US, "%.2f (%s)", g2d, desc);
+      return String.format(Locale.US, "%.1f (%s)", g1d, desc);
     }
   }
 
