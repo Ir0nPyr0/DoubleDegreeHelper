@@ -15,6 +15,10 @@ on:
         description: 'Versionsnummer für den Testbuild (z.B. 1.0.8)'
         required: true
         default: '0.0.1'
+      publish:
+        description: 'Als Release veröffentlichen (Tag v<Version> wird angelegt)'
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -33,6 +37,8 @@ jobs:
             RAW="${{ github.event.release.tag_name }}"
           elif [ "${{ github.event_name }}" = "push" ]; then
             RAW="${{ github.ref_name }}"
+          elif [ "${{ inputs.publish }}" = "true" ]; then
+            RAW="v${{ inputs.version }}"
           else
             RAW="${{ inputs.version }}"
           fi
@@ -85,7 +91,7 @@ jobs:
           path: ${{ steps.exe.outputs.path }}
 
       - name: Installer ans Release hängen
-        if: github.event_name != 'workflow_dispatch'
+        if: github.event_name != 'workflow_dispatch' || inputs.publish
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -93,6 +99,6 @@ jobs:
           TAG="${{ steps.ver.outputs.tag }}"
           if ! gh release view "$TAG" --repo "${{ github.repository }}" >/dev/null 2>&1; then
             gh release create "$TAG" --repo "${{ github.repository }}" \
-              --title "Version ${{ steps.ver.outputs.version }}" --generate-notes --latest
+              --target "${{ github.sha }}" --title "Version ${{ steps.ver.outputs.version }}" --generate-notes --latest
           fi
           gh release upload "$TAG" "${{ steps.exe.outputs.path }}" --clobber --repo "${{ github.repository }}"
