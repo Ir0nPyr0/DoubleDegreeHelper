@@ -4,6 +4,11 @@ name: Installer bauen
 # oder wenn ein Tag v... gepusht wird (dann wird das Release automatisch angelegt).
 # Baut den Windows-Installer mit genau dieser Versionsnummer und hängt ihn ans Release.
 # Über "Run workflow" kann man auch nur testweise bauen (ohne Release).
+#
+# Private Updates (optional, siehe Einstellungen des Repos):
+#   Variable RELEASE_REPO           z.B. Ir0nPyr0/DoubleDegreeHelper-Releases (privates Repo nur für Installer)
+#   Secret   UPDATE_READ_TOKEN      Token, der NUR dieses Release-Repo lesen darf -> wird in die App eingebaut
+#   Secret   RELEASE_PUBLISH_TOKEN  Token, der in dieses Release-Repo schreiben darf -> nur für diese Action
 on:
   release:
     types: [published]
@@ -22,6 +27,9 @@ on:
 
 permissions:
   contents: write
+
+env:
+  RELEASE_REPO: ${{ vars.RELEASE_REPO || github.repository }}
 
 jobs:
   build-installer:
@@ -70,6 +78,20 @@ jobs:
             "$($wix.FullName)\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
           }
 
+      - name: Update-Quelle in die App einbauen
+        shell: bash
+        env:
+          UPDATE_READ_TOKEN: ${{ secrets.UPDATE_READ_TOKEN }}
+        run: |
+          F=src/main/resources/calculator/update.properties
+          echo "repo=$RELEASE_REPO" > "$F"
+          if [ -n "$UPDATE_READ_TOKEN" ]; then
+            echo "token=$UPDATE_READ_TOKEN" >> "$F"
+            echo "Update-Quelle: $RELEASE_REPO (mit Lese-Token)"
+          else
+            echo "::warning::Secret UPDATE_READ_TOKEN fehlt. Die App kann private Releases dann nicht sehen."
+          fi
+
       - name: Installer bauen
         shell: pwsh
         run: .\gradlew.bat jpackage "-PappVersion=${{ steps.ver.outputs.version }}" --no-daemon
@@ -110,3 +132,20 @@ jobs:
               --target "${{ github.sha }}" --title "Version ${{ steps.ver.outputs.version }}" --generate-notes --latest
           fi
           gh release upload "$TAG" "${{ steps.exe.outputs.path }}" --clobber --repo "${{ github.repository }}"
+          gh release view "$TAG" --repo "${{ github.repository }}" --json body --jq .body > notes.md
+
+      - name: Installer ins Release-Repo veröffentlichen
+        if: (github.event_name != 'workflow_dispatch' || inputs.publish) && env.RELEASE_REPO != github.repository
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_PUBLISH_TOKEN }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then echo "::error::Secret RELEASE_PUBLISH_TOKEN fehlt"; exit 1; fi
+          TAG="${{ steps.ver.outputs.tag }}"
+          # Links auf das private Code-Repo aus den Notizen entfernen, nur der Text bleibt.
+          sed -E 's#https://github.com/[^ )]+##g' notes.md > notes-public.md
+          if ! gh release view "$TAG" --repo "$RELEASE_REPO" >/dev/null 2>&1; then
+            gh release create "$TAG" --repo "$RELEASE_REPO" \
+              --title "Version ${{ steps.ver.outputs.version }}" --notes-file notes-public.md --latest
+          fi
+          gh release upload "$TAG" "${{ steps.exe.outputs.path }}" --clobber --repo "$RELEASE_REPO"

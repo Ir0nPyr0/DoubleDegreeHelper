@@ -28,6 +28,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Properties;
 import java.util.prefs.Preferences;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -40,9 +41,15 @@ import java.util.regex.Pattern;
 public final class UpdateChecker {
   private static final Logger logger = LoggerFactory.getLogger(UpdateChecker.class);
 
-  /** GitHub-Repo, dessen Releases geprüft werden ("besitzer/repo"). Muss öffentlich sein. */
-  public static final String RELEASE_REPO =
-      System.getProperty("ddh.releaseRepo", "Ir0nPyr0/DoubleDegreeHelper");
+  /**
+   * Update-Quelle. Wird beim Release-Build von der GitHub Action in
+   * /calculator/update.properties geschrieben (repo=besitzer/repo, token=nur-lese-token).
+   * Die Datei ist nicht im Git, der Token liegt nur als Secret auf GitHub.
+   */
+  private static final Properties CONFIG = loadConfig();
+  public static final String RELEASE_REPO = System.getProperty("ddh.releaseRepo",
+      CONFIG.getProperty("repo", "Ir0nPyr0/DoubleDegreeHelper").trim());
+  private static final String TOKEN = CONFIG.getProperty("token", "").trim();
 
   private static final String SKIP_KEY = "skipUpdateVersion";
   private static final Preferences PREFS = Preferences.userNodeForPackage(UpdateChecker.class);
@@ -50,8 +57,30 @@ public final class UpdateChecker {
       .followRedirects(HttpClient.Redirect.NORMAL)
       .connectTimeout(Duration.ofSeconds(8))
       .build();
+  private static final HttpClient NO_REDIRECT = HttpClient.newBuilder()
+      .followRedirects(HttpClient.Redirect.NEVER)
+      .connectTimeout(Duration.ofSeconds(8))
+      .build();
 
   private UpdateChecker() {}
+
+  private static Properties loadConfig() {
+    Properties p = new Properties();
+    try (InputStream in = UpdateChecker.class.getResourceAsStream("/calculator/update.properties")) {
+      if (in != null) p.load(in);
+    } catch (IOException e) {
+      logger.info("update.properties nicht lesbar: {}", e.toString());
+    }
+    return p;
+  }
+
+  private static HttpRequest.Builder api(String url) {
+    HttpRequest.Builder b = HttpRequest.newBuilder(URI.create(url))
+        .header("User-Agent", "DoubleDegreeHelper-Updater")
+        .header("X-GitHub-Api-Version", "2022-11-28");
+    if (!TOKEN.isEmpty()) b.header("Authorization", "Bearer " + TOKEN);
+    return b;
+  }
 
   /** Neueste Version mit Download-Link für den Installer. */
   record Release(String version, String installerUrl, String installerName, String pageUrl, String notes) {}
@@ -83,15 +112,18 @@ public final class UpdateChecker {
   }
 
   static Optional<Release> fetchLatest() throws IOException, InterruptedException {
-    HttpRequest req = HttpRequest.newBuilder(
-            URI.create("https://api.github.com/repos/" + RELEASE_REPO + "/releases/latest"))
+    HttpRequest req = api("https://api.github.com/repos/" + RELEASE_REPO + "/releases/latest")
         .header("Accept", "application/vnd.github+json")
-        .header("User-Agent", "DoubleDegreeHelper-Updater")
         .timeout(Duration.ofSeconds(15))
         .GET().build();
     HttpResponse<String> resp = HTTP.send(req, HttpResponse.BodyHandlers.ofString());
     if (resp.statusCode() == 404) {
-      HelpLog.add("Update-Prüfung: keine öffentlichen Releases unter " + RELEASE_REPO + " gefunden.");
+      HelpLog.add("Update-Prüfung: keine Releases unter " + RELEASE_REPO + " gefunden"
+          + (TOKEN.isEmpty() ? " (kein Zugriffs-Token eingebaut)." : " (Token hat keinen Zugriff?)."));
+      return Optional.empty();
+    }
+    if (resp.statusCode() == 401) {
+      HelpLog.add("Update-Prüfung: Zugriffs-Token ungültig oder abgelaufen.");
       return Optional.empty();
     }
     if (resp.statusCode() != 200) {
@@ -108,15 +140,21 @@ public final class UpdateChecker {
     String page = stringField(json, "html_url");
     String notes = Optional.ofNullable(stringField(json, "body")).orElse("");
 
+    // Pro Asset gibt es eine API-URL (funktioniert mit Token auch bei privaten Repos)
+    // und eine browser_download_url (nur für den Dateinamen). Beide stehen in gleicher Reihenfolge.
+    List<String> apiUrls = new ArrayList<>();
+    Matcher a = Pattern.compile("\"url\"\\s*:\\s*\"(https://api\\.github\\.com/repos/[^\"]+/releases/assets/\\d+)\"").matcher(json);
+    while (a.find()) apiUrls.add(a.group(1));
+
     String installerUrl = null;
     String installerName = null;
     Matcher m = Pattern.compile("\"browser_download_url\"\\s*:\\s*\"([^\"]+)\"").matcher(json);
-    while (m.find()) {
+    for (int i = 0; m.find(); i++) {
       String url = m.group(1);
       String name = url.substring(url.lastIndexOf('/') + 1);
       String lower = name.toLowerCase();
       if (lower.endsWith(".exe") || lower.endsWith(".msi")) {
-        installerUrl = url;
+        installerUrl = i < apiUrls.size() ? apiUrls.get(i) : url;
         installerName = name;
         if (lower.endsWith(".exe")) break;
       }
@@ -219,11 +257,7 @@ public final class UpdateChecker {
       protected Path call() throws Exception {
         Path dir = Files.createTempDirectory("ddh-update-");
         Path target = dir.resolve(r.installerName());
-        HttpRequest req = HttpRequest.newBuilder(URI.create(r.installerUrl()))
-            .header("User-Agent", "DoubleDegreeHelper-Updater")
-            .header("Accept", "application/octet-stream")
-            .GET().build();
-        HttpResponse<InputStream> resp = HTTP.send(req, HttpResponse.BodyHandlers.ofInputStream());
+        HttpResponse<InputStream> resp = openDownload(r.installerUrl());
         if (resp.statusCode() != 200) throw new IOException("Download fehlgeschlagen (HTTP " + resp.statusCode() + ")");
         long total = resp.headers().firstValueAsLong("Content-Length").orElse(-1);
         Path part = dir.resolve(r.installerName() + ".part");
@@ -268,6 +302,27 @@ public final class UpdateChecker {
     Thread t = new Thread(task, "update-download");
     t.setDaemon(true);
     t.start();
+  }
+
+  /**
+   * GitHub leitet Asset-Downloads auf einen signierten Speicher-Link weiter. Den Token
+   * nur an GitHub schicken, der Weiterleitung ohne Token folgen.
+   */
+  private static HttpResponse<InputStream> openDownload(String url) throws IOException, InterruptedException {
+    HttpRequest req = api(url).header("Accept", "application/octet-stream").GET().build();
+    HttpResponse<InputStream> resp = NO_REDIRECT.send(req, HttpResponse.BodyHandlers.ofInputStream());
+    for (int hops = 0; hops < 5 && resp.statusCode() / 100 == 3; hops++) {
+      String loc = resp.headers().firstValue("Location").orElseThrow(() -> new IOException("Weiterleitung ohne Ziel"));
+      resp.body().close();
+      URI next = URI.create(url).resolve(loc);
+      url = next.toString();
+      HttpRequest.Builder b = HttpRequest.newBuilder(next).header("User-Agent", "DoubleDegreeHelper-Updater");
+      if ("api.github.com".equalsIgnoreCase(next.getHost()) && !TOKEN.isEmpty()) {
+        b.header("Authorization", "Bearer " + TOKEN).header("Accept", "application/octet-stream");
+      }
+      resp = NO_REDIRECT.send(b.GET().build(), HttpResponse.BodyHandlers.ofInputStream());
+    }
+    return resp;
   }
 
   private static void launchInstaller(Path installer) throws IOException {
