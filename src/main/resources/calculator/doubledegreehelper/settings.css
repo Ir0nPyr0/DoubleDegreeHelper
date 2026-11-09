@@ -42,12 +42,12 @@
     -fx-background-insets: 0;
     -fx-padding: 0;
 }
-.card-list .list-cell {
+.card-list > .virtual-flow > .clipped-container > .sheet > .list-cell {
     -fx-background-color: transparent;
     -fx-padding: 0 0 8 0;
 }
-.card-list .list-cell:filled:selected,
-.card-list .list-cell:filled:focused:selected {
+.card-list > .virtual-flow > .clipped-container > .sheet > .list-cell:filled:selected,
+.card-list > .virtual-flow > .clipped-container > .sheet > .list-cell:filled:focused:selected {
     -fx-background-color: transparent;
 }
 .card {
@@ -155,4 +155,34 @@
 .paired-label {
     -fx-text-fill: #1d4ed8;
     -fx-font-size: 11px;
+}
+
+/* Aufgeklappte Dropdown-Listen (ComboBox und HHN-Auswahl) */
+.combo-box-popup > .list-view {
+    -fx-background-color: white;
+    -fx-background-radius: 6;
+    -fx-border-color: #cbd5e1;
+    -fx-border-radius: 6;
+    -fx-effect: dropshadow(gaussian, rgba(15, 23, 42, 0.15), 12, 0, 0, 3);
+    -fx-padding: 4;
+}
+.combo-box-popup > .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell {
+    -fx-background-color: transparent;
+    -fx-background-radius: 4;
+    -fx-padding: 5 8 5 8;
+    -fx-text-fill: #1e293b;
+}
+.combo-box-popup > .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell:filled:hover,
+.combo-box-popup > .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell:filled:focused {
+    -fx-background-color: #eff6ff;
+    -fx-text-fill: #1e293b;
+}
+.combo-box-popup > .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell:filled:selected {
+    -fx-background-color: #dbeafe;
+    -fx-text-fill: #1e293b;
+}
+.combo-box-popup .list-cell .check-box,
+.combo-box-popup .list-cell .check-box .text {
+    -fx-text-fill: #1e293b;
+    -fx-fill: #1e293b;
 }
