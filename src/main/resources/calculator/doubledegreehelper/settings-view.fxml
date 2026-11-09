@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane styleClass="set-root" fx:id="root" stylesheets="@settings.css, @help.css" prefHeight="650.0" prefWidth="1200.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="calculator.doubledegreehelper.controller.settingsController">
+
+   <top>
+      <HBox alignment="CENTER_LEFT" spacing="16.0" styleClass="set-header">
+         <padding><Insets top="12.0" right="20.0" bottom="12.0" left="16.0" /></padding>
+         <children>
+            <Button fx:id="backButton" mnemonicParsing="false" text="← Startseite" styleClass="ghost" />
+            <VBox spacing="2.0" HBox.hgrow="ALWAYS">
+               <children>
+                  <Label text="Einstellungen" styleClass="set-title" />
+                  <Label text="VGU-Module den HHN-Modulen zuordnen, HHN-Module in Kategorien einteilen" styleClass="muted" />
+               </children>
+            </VBox>
+            <Label fx:id="saveStatus" styleClass="muted" />
+            <Button fx:id="helpButton" mnemonicParsing="false" text="Hilfe" styleClass="help-button" />
+            <Button fx:id="saveButton" defaultButton="true" mnemonicParsing="false" prefHeight="36.0" minWidth="130.0" text="Speichern" styleClass="primary" />
+         </children>
+      </HBox>
+   </top>
+
+   <center>
+      <HBox spacing="16.0">
+         <padding><Insets top="16.0" right="16.0" bottom="16.0" left="16.0" /></padding>
+         <children>
+
+            <!-- VGU -->
+            <VBox spacing="8.0" HBox.hgrow="ALWAYS" styleClass="column" prefWidth="460.0">
+               <children>
+                  <HBox alignment="CENTER_LEFT" spacing="8.0">
+                     <children>
+                        <Label text="VGU-Module" styleClass="section-title" />
+                        <Label fx:id="vguCount" styleClass="count" />
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Button fx:id="addVguButton" mnemonicParsing="false" text="+ Modul" styleClass="small" />
+                     </children>
+                  </HBox>
+                  <Label text="Welche HHN-Module ersetzt das VGU-Modul?" styleClass="muted" />
+                  <TextField fx:id="vguSearch" promptText="Suchen" />
+                  <ListView fx:id="compareModuleContainer" VBox.vgrow="ALWAYS" styleClass="card-list" />
+               </children>
+            </VBox>
+
+            <!-- HHN -->
+            <VBox spacing="8.0" HBox.hgrow="ALWAYS" styleClass="column" prefWidth="460.0">
+               <children>
+                  <HBox alignment="CENTER_LEFT" spacing="8.0">
+                     <children>
+                        <Label text="HHN-Module" styleClass="section-title" />
+                        <Label fx:id="hhnCount" styleClass="count" />
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Button fx:id="addHhnButton" mnemonicParsing="false" text="+ Modul" styleClass="small" />
+                     </children>
+                  </HBox>
+                  <Label text="Module, die im Zeugnis erscheinen" styleClass="muted" />
+                  <TextField fx:id="hhnSearch" promptText="Suchen" />
+                  <ListView fx:id="hhnModuleContainer" VBox.vgrow="ALWAYS" styleClass="card-list" />
+               </children>
+            </VBox>
+
+            <!-- Kategorien -->
+            <VBox spacing="8.0" minWidth="250.0" prefWidth="270.0" maxWidth="320.0" styleClass="column">
+               <children>
+                  <HBox alignment="CENTER_LEFT" spacing="8.0">
+                     <children>
+                        <Label text="Kategorien" minWidth="-Infinity" styleClass="section-title" />
+                        <Label fx:id="categoryCount" styleClass="count" />
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Button fx:id="addCategoryButton" mnemonicParsing="false" text="+ Neu" minWidth="-Infinity" styleClass="small" />
+                     </children>
+                  </HBox>
+                  <Label text="Reihenfolge im Zeugnis: per Drag and Drop am Griff ☰ ändern" wrapText="true" styleClass="muted" />
+                  <ListView fx:id="categoryContainer" VBox.vgrow="ALWAYS" styleClass="card-list" />
+               </children>
+            </VBox>
+         </children>
+      </HBox>
+   </center>
+</BorderPane>

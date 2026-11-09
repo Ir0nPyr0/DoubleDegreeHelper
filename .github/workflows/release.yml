@@ -1,0 +1,151 @@
+name: Installer bauen
+
+# Läuft, wenn auf GitHub ein Release veröffentlicht wird (Tag z.B. v1.0.8)
+# oder wenn ein Tag v... gepusht wird (dann wird das Release automatisch angelegt).
+# Baut den Windows-Installer mit genau dieser Versionsnummer und hängt ihn ans Release.
+# Über "Run workflow" kann man auch nur testweise bauen (ohne Release).
+#
+# Private Updates (optional, siehe Einstellungen des Repos):
+#   Variable RELEASE_REPO           z.B. Ir0nPyr0/DoubleDegreeHelper-Releases (privates Repo nur für Installer)
+#   Secret   UPDATE_READ_TOKEN      Token, der NUR dieses Release-Repo lesen darf -> wird in die App eingebaut
+#   Secret   RELEASE_PUBLISH_TOKEN  Token, der in dieses Release-Repo schreiben darf -> nur für diese Action
+on:
+  release:
+    types: [published]
+  push:
+    tags: ['v*', 'V*']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Versionsnummer für den Testbuild (z.B. 1.0.8)'
+        required: true
+        default: '0.0.1'
+      publish:
+        description: 'Als Release veröffentlichen (Tag v<Version> wird angelegt)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+env:
+  RELEASE_REPO: ${{ vars.RELEASE_REPO || github.repository }}
+
+jobs:
+  build-installer:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Version bestimmen
+        id: ver
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            RAW="${{ github.event.release.tag_name }}"
+          elif [ "${{ github.event_name }}" = "push" ]; then
+            RAW="${{ github.ref_name }}"
+          elif [ "${{ inputs.publish }}" = "true" ]; then
+            RAW="v${{ inputs.version }}"
+          else
+            RAW="${{ inputs.version }}"
+          fi
+          VERSION="$(echo "$RAW" | sed -E 's/^[^0-9]*//')"
+          if ! echo "$VERSION" | grep -Eq '^[0-9]+(\.[0-9]+){0,2}$'; then
+            echo "::error::Tag '$RAW' ist keine gültige Version. Bitte z.B. v1.0.8 verwenden."
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=$RAW" >> "$GITHUB_OUTPUT"
+          echo "Baue Version $VERSION"
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: WiX Toolset sicherstellen
+        shell: pwsh
+        run: |
+          if (-not (Get-Command candle.exe -ErrorAction SilentlyContinue)) {
+            $wix = Get-ChildItem "C:\Program Files (x86)" -Filter "WiX Toolset v3*" -Directory -ErrorAction SilentlyContinue | Select-Object -First 1
+            if (-not $wix) {
+              choco install wixtoolset --version 3.14.1 -y --no-progress
+              $wix = Get-ChildItem "C:\Program Files (x86)" -Filter "WiX Toolset v3*" -Directory | Select-Object -First 1
+            }
+            "$($wix.FullName)\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          }
+
+      - name: Update-Quelle in die App einbauen
+        shell: bash
+        env:
+          UPDATE_READ_TOKEN: ${{ secrets.UPDATE_READ_TOKEN }}
+        run: |
+          F=src/main/resources/calculator/update.properties
+          echo "repo=$RELEASE_REPO" > "$F"
+          if [ -n "$UPDATE_READ_TOKEN" ]; then
+            echo "token=$UPDATE_READ_TOKEN" >> "$F"
+            echo "Update-Quelle: $RELEASE_REPO (mit Lese-Token)"
+          else
+            echo "::warning::Secret UPDATE_READ_TOKEN fehlt. Die App kann private Releases dann nicht sehen."
+          fi
+
+      - name: Installer bauen
+        shell: pwsh
+        run: .\gradlew.bat jpackage "-PappVersion=${{ steps.ver.outputs.version }}" --no-daemon
+
+      - name: Prüfen, dass HTTPS-Module im Image sind
+        shell: bash
+        run: |
+          JAVA="$(find build/image -path '*bin/java.exe' | head -n 1)"
+          "$JAVA" --list-modules | tee modules.txt
+          grep -q '^jdk.crypto.ec' modules.txt || { echo "::error::jdk.crypto.ec fehlt im Image (Update-Check scheitert dann mit handshake_failure)"; exit 1; }
+          grep -q '^java.net.http' modules.txt || { echo "::error::java.net.http fehlt im Image"; exit 1; }
+
+      - name: Installer umbenennen
+        id: exe
+        shell: bash
+        run: |
+          EXE="$(find build/jpackage -maxdepth 1 -name '*.exe' | head -n 1)"
+          if [ -z "$EXE" ]; then echo "::error::Kein Installer in build/jpackage gefunden"; ls -la build/jpackage; exit 1; fi
+          OUT="build/DoubleDegreeHelper-Setup-${{ steps.ver.outputs.version }}.exe"
+          mv "$EXE" "$OUT"
+          echo "path=$OUT" >> "$GITHUB_OUTPUT"
+
+      - name: Installer als Build-Artefakt speichern
+        uses: actions/upload-artifact@v4
+        with:
+          name: DoubleDegreeHelper-Setup-${{ steps.ver.outputs.version }}
+          path: ${{ steps.exe.outputs.path }}
+
+      - name: Installer ans Release hängen
+        if: github.event_name != 'workflow_dispatch' || inputs.publish
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ steps.ver.outputs.tag }}"
+          if ! gh release view "$TAG" --repo "${{ github.repository }}" >/dev/null 2>&1; then
+            gh release create "$TAG" --repo "${{ github.repository }}" \
+              --target "${{ github.sha }}" --title "Version ${{ steps.ver.outputs.version }}" --generate-notes --latest
+          fi
+          gh release upload "$TAG" "${{ steps.exe.outputs.path }}" --clobber --repo "${{ github.repository }}"
+          gh release view "$TAG" --repo "${{ github.repository }}" --json body --jq .body > notes.md
+
+      - name: Installer ins Release-Repo veröffentlichen
+        if: (github.event_name != 'workflow_dispatch' || inputs.publish) && env.RELEASE_REPO != github.repository
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_PUBLISH_TOKEN }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then echo "::error::Secret RELEASE_PUBLISH_TOKEN fehlt"; exit 1; fi
+          TAG="${{ steps.ver.outputs.tag }}"
+          # Links auf das private Code-Repo aus den Notizen entfernen, nur der Text bleibt.
+          sed -E 's#https://github.com/[^ )]+##g' notes.md > notes-public.md
+          if ! gh release view "$TAG" --repo "$RELEASE_REPO" >/dev/null 2>&1; then
+            gh release create "$TAG" --repo "$RELEASE_REPO" \
+              --title "Version ${{ steps.ver.outputs.version }}" --notes-file notes-public.md --latest
+          fi
+          gh release upload "$TAG" "${{ steps.exe.outputs.path }}" --clobber --repo "$RELEASE_REPO"

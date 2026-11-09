@@ -1,0 +1,215 @@
+.set-root {
+    -accent: #2563eb;
+    -muted: #64748b;
+    -line: #e2e8f0;
+    -fx-background-color: #f8fafc;
+}
+.set-header {
+    -fx-background-color: white;
+    -fx-border-color: -line;
+    -fx-border-width: 0 0 1 0;
+}
+.set-title {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+}
+.muted {
+    -fx-text-fill: -muted;
+    -fx-font-size: 12px;
+}
+.section-title {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+}
+.count {
+    -fx-background-color: #e2e8f0;
+    -fx-background-radius: 999;
+    -fx-padding: 1 8 1 8;
+    -fx-font-size: 11px;
+    -fx-text-fill: #334155;
+}
+.column {
+    -fx-background-color: white;
+    -fx-border-color: -line;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-padding: 12;
+}
+
+/* Karten-Liste */
+.card-list {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+}
+.card-list > .virtual-flow > .clipped-container > .sheet > .list-cell {
+    -fx-background-color: transparent;
+    -fx-padding: 0 0 8 0;
+}
+.card-list > .virtual-flow > .clipped-container > .sheet > .list-cell:filled:selected,
+.card-list > .virtual-flow > .clipped-container > .sheet > .list-cell:filled:focused:selected {
+    -fx-background-color: transparent;
+}
+.card {
+    -fx-background-color: #f8fafc;
+    -fx-border-color: -line;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 8 8 8 10;
+}
+.card:hover {
+    -fx-border-color: #cbd5e1;
+}
+.card.unmapped {
+    -fx-border-color: #fcd34d;
+    -fx-background-color: #fffbeb;
+}
+.card-label {
+    -fx-text-fill: -muted;
+    -fx-font-size: 11px;
+}
+.arrow {
+    -fx-text-fill: -muted;
+    -fx-font-size: 13px;
+}
+
+/* Buttons */
+.primary {
+    -fx-base: -accent;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+.ghost {
+    -fx-background-color: transparent;
+    -fx-text-fill: #334155;
+    -fx-cursor: hand;
+}
+.ghost:hover {
+    -fx-background-color: #f1f5f9;
+    -fx-background-radius: 6;
+}
+.small {
+    -fx-font-size: 12px;
+    -fx-padding: 3 10 3 10;
+}
+.delete-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: #94a3b8;
+    -fx-padding: 0 6 0 6;
+    -fx-cursor: hand;
+}
+.delete-button:hover {
+    -fx-background-color: #fee2e2;
+    -fx-background-radius: 6;
+    -fx-text-fill: #b91c1c;
+}
+
+/* Einheitliche Höhe und vertikal zentrierter Text in Feldern und Dropdowns */
+.card .text-field,
+.card .combo-box-base,
+.card .check-combo-box {
+    -fx-pref-height: 30;
+    -fx-min-height: 30;
+    -fx-max-height: 30;
+}
+.card .combo-box-base > .list-cell,
+.card .check-combo-box > .list-cell,
+.card .check-combo-box .label {
+    -fx-alignment: center-left;
+    -fx-padding: 0 0 0 8;
+}
+.card .combo-box-base > .arrow-button,
+.card .check-combo-box > .arrow-button {
+    -fx-padding: 0 8 0 8;
+}
+
+/* Zuordnungs-Kasten VGU -> HHN */
+.pair-box {
+    -fx-background-color: #eff6ff;
+    -fx-border-color: #bfdbfe;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-padding: 6 8 6 8;
+}
+.pair-head {
+    -fx-text-fill: #1d4ed8;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+.pair-tag {
+    -fx-background-color: #2563eb;
+    -fx-text-fill: white;
+    -fx-background-radius: 4;
+    -fx-padding: 0 5 0 5;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+}
+.pair-name {
+    -fx-text-fill: #1e293b;
+    -fx-font-size: 12px;
+}
+.pair-meta {
+    -fx-text-fill: -muted;
+    -fx-font-size: 11px;
+}
+.paired-label {
+    -fx-text-fill: #1d4ed8;
+    -fx-font-size: 11px;
+}
+
+/* Aufgeklappte Dropdown-Listen (ComboBox und HHN-Auswahl) */
+.combo-box-popup > .list-view {
+    -fx-background-color: white;
+    -fx-background-radius: 6;
+    -fx-border-color: #cbd5e1;
+    -fx-border-radius: 6;
+    -fx-effect: dropshadow(gaussian, rgba(15, 23, 42, 0.15), 12, 0, 0, 3);
+    -fx-padding: 4;
+}
+.combo-box-popup > .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell {
+    -fx-background-color: transparent;
+    -fx-background-radius: 4;
+    -fx-padding: 5 8 5 8;
+    -fx-text-fill: #1e293b;
+}
+.combo-box-popup > .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell:filled:hover,
+.combo-box-popup > .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell:filled:focused {
+    -fx-background-color: #eff6ff;
+    -fx-text-fill: #1e293b;
+}
+.combo-box-popup > .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell:filled:selected {
+    -fx-background-color: #dbeafe;
+    -fx-text-fill: #1e293b;
+}
+.combo-box-popup .list-cell .check-box,
+.combo-box-popup .list-cell .check-box .text {
+    -fx-text-fill: #1e293b;
+    -fx-fill: #1e293b;
+}
+
+/* Kategorien sortieren */
+.drag-handle {
+    -fx-text-fill: #94a3b8;
+    -fx-font-size: 14px;
+    -fx-cursor: move;
+    -fx-padding: 0 2 0 0;
+}
+.drag-handle:hover {
+    -fx-text-fill: -accent;
+}
+.position {
+    -fx-text-fill: -muted;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+}
+.card.dragging {
+    -fx-opacity: 0.4;
+}
+.card.drop-above {
+    -fx-border-color: -accent transparent transparent transparent;
+    -fx-border-width: 2 1 1 1;
+}
+.card.drop-below {
+    -fx-border-color: transparent transparent -accent transparent;
+    -fx-border-width: 1 1 2 1;
+}
