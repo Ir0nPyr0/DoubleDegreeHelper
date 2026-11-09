@@ -213,3 +213,30 @@
     -fx-border-color: transparent transparent -accent transparent;
     -fx-border-width: 1 1 2 1;
 }
+
+/* Zurück-zur-Startseite-Button: klar als Button erkennbar */
+.back-button {
+    -fx-background-color: white;
+    -fx-background-radius: 8;
+    -fx-border-color: #cbd5e1;
+    -fx-border-radius: 8;
+    -fx-text-fill: #1e293b;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-padding: 7 14 7 12;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(15, 23, 42, 0.08), 3, 0, 0, 1);
+}
+.back-button:hover {
+    -fx-background-color: #eff6ff;
+    -fx-border-color: #2563eb;
+    -fx-text-fill: #2563eb;
+}
+.back-button:pressed {
+    -fx-background-color: #dbeafe;
+}
+.back-button:focus-visible {
+    -fx-border-color: #2563eb;
+    -fx-border-width: 2;
+    -fx-padding: 6 13 6 11;
+}
