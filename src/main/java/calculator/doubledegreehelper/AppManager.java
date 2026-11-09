@@ -23,6 +23,22 @@ public class AppManager {
 
   private static final ObservableList<Category> categories = FXCollections.observableArrayList();
 
+  static {
+    // Die Reihenfolge der Liste ist die Reihenfolge im Zeugnis: oben = Priorität 0.
+    categories.addListener((javafx.collections.ListChangeListener<Category>) c -> renumberCategories());
+  }
+
+  private static void renumberCategories() {
+    for (int i = 0; i < categories.size(); i++) categories.get(i).setPriority(i);
+  }
+
+  /** Verschiebt eine Kategorie (Drag and Drop in den Einstellungen). */
+  public static void moveCategory(int from, int to) {
+    if (from < 0 || from >= categories.size() || from == to) return;
+    Category c = categories.remove(from);
+    categories.add(Math.max(0, Math.min(to, categories.size())), c);
+  }
+
   public static ObservableList<Category> getCategories() {
     return categories;
     }

@@ -116,7 +116,11 @@ public class SaveHandler {
     AppManager.clearCategories();
     hhnList.forEach(AppManager::addHhnModule);
     cmpList.forEach(AppManager::addCompareModule);
-    catList.forEach(AppManager::addCategory);
+    // Alte Dateien haben frei vergebene Prioritäten (z. B. 0..100):
+    // nach Priorität sortiert übernehmen, die Liste nummeriert dann neu durch.
+    catList.stream()
+        .sorted(java.util.Comparator.comparingInt(Category::getPriority))
+        .forEach(AppManager::addCategory);
     saveBlocked = false;
     logger.info("Daten geladen aus {} ({} HHN, {} CMP, {} Kategorien)",
         DATA_FILE, hhnList.size(), cmpList.size(), catList.size());

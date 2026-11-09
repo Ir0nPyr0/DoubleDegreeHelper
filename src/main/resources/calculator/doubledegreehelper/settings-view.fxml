@@ -79,7 +79,7 @@
                         <Button fx:id="addCategoryButton" mnemonicParsing="false" text="+ Neu" minWidth="-Infinity" styleClass="small" />
                      </children>
                   </HBox>
-                  <Label text="Name und Reihenfolge (Priorität)" styleClass="muted" />
+                  <Label text="Reihenfolge im Zeugnis: per Drag and Drop am Griff ☰ ändern" wrapText="true" styleClass="muted" />
                   <ListView fx:id="categoryContainer" VBox.vgrow="ALWAYS" styleClass="card-list" />
                </children>
             </VBox>
