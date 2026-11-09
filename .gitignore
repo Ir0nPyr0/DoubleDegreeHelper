@@ -45,3 +45,4 @@ bin/
 BugWithThatData/
 InjectFiles/
 *.exe
+src/main/resources/calculator/update.properties
