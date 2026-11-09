@@ -1,11 +1,14 @@
 name: Installer bauen
 
-# Läuft, wenn auf GitHub ein Release veröffentlicht wird (Tag z.B. v1.0.8).
+# Läuft, wenn auf GitHub ein Release veröffentlicht wird (Tag z.B. v1.0.8)
+# oder wenn ein Tag v... gepusht wird (dann wird das Release automatisch angelegt).
 # Baut den Windows-Installer mit genau dieser Versionsnummer und hängt ihn ans Release.
 # Über "Run workflow" kann man auch nur testweise bauen (ohne Release).
 on:
   release:
     types: [published]
+  push:
+    tags: ['v*', 'V*']
   workflow_dispatch:
     inputs:
       version:
@@ -28,6 +31,8 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" = "release" ]; then
             RAW="${{ github.event.release.tag_name }}"
+          elif [ "${{ github.event_name }}" = "push" ]; then
+            RAW="${{ github.ref_name }}"
           else
             RAW="${{ inputs.version }}"
           fi
@@ -37,6 +42,7 @@ jobs:
             exit 1
           fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=$RAW" >> "$GITHUB_OUTPUT"
           echo "Baue Version $VERSION"
 
       - uses: actions/setup-java@v4
@@ -79,8 +85,14 @@ jobs:
           path: ${{ steps.exe.outputs.path }}
 
       - name: Installer ans Release hängen
-        if: github.event_name == 'release'
+        if: github.event_name != 'workflow_dispatch'
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release upload "${{ github.event.release.tag_name }}" "${{ steps.exe.outputs.path }}" --clobber --repo "${{ github.repository }}"
+        run: |
+          TAG="${{ steps.ver.outputs.tag }}"
+          if ! gh release view "$TAG" --repo "${{ github.repository }}" >/dev/null 2>&1; then
+            gh release create "$TAG" --repo "${{ github.repository }}" \
+              --title "Version ${{ steps.ver.outputs.version }}" --generate-notes --latest
+          fi
+          gh release upload "$TAG" "${{ steps.exe.outputs.path }}" --clobber --repo "${{ github.repository }}"
