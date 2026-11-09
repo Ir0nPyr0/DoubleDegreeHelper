@@ -8,6 +8,8 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.AtomicMoveNotSupportedException;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,6 +18,7 @@ public class SaveHandler {
 
   private static final Path DATA_DIR;
   private static final Path DATA_FILE;
+  private static boolean saveBlocked;
 
   static {
     String base = System.getProperty("user.home");
@@ -24,6 +27,10 @@ public class SaveHandler {
   }
 
   public void saveData() {
+    if (saveBlocked) {
+      logger.error("Speichern gesperrt: '{}' konnte nicht geladen werden. Die Datei bleibt erhalten.", DATA_FILE);
+      return;
+    }
     try {
       Files.createDirectories(DATA_DIR);
     } catch (IOException io) {
@@ -34,41 +41,89 @@ public class SaveHandler {
     List<ModuleItem> hhnCopy = new ArrayList<>(AppManager.getHhnModules());
     List<ModuleItem> cmpCopy = new ArrayList<>(AppManager.getCompareModules());
 
-    try (ObjectOutputStream out = new ObjectOutputStream(
-        new BufferedOutputStream(Files.newOutputStream(DATA_FILE)))) {
-      out.writeObject(hhnCopy);
-      out.writeObject(cmpCopy);
-      out.writeObject(new ArrayList<>(AppManager.getCategories()));
+    Path temporaryFile = null;
+    try {
+      temporaryFile = Files.createTempFile(DATA_DIR, "modules-", ".tmp");
+      try (ObjectOutputStream out = new ObjectOutputStream(
+          new BufferedOutputStream(Files.newOutputStream(temporaryFile)))) {
+        out.writeObject(hhnCopy);
+        out.writeObject(cmpCopy);
+        out.writeObject(new ArrayList<>(AppManager.getCategories()));
+      }
+      try {
+        Files.move(temporaryFile, DATA_FILE,
+            StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+      } catch (AtomicMoveNotSupportedException ex) {
+        Files.move(temporaryFile, DATA_FILE, StandardCopyOption.REPLACE_EXISTING);
+      }
       logger.info("Daten gespeichert nach {} ({} HHN, {} CMP, {} Kategorien)",
           DATA_FILE, hhnCopy.size(), cmpCopy.size(), AppManager.getCategories().size());
     } catch (IOException e) {
       logger.error("Fehler beim Speichern der Module: {}", e.toString(), e);
+    } finally {
+      if (temporaryFile != null) {
+        try {
+          Files.deleteIfExists(temporaryFile);
+        } catch (IOException e) {
+          logger.warn("Temporäre Moduldatei konnte nicht entfernt werden: {}", temporaryFile, e);
+        }
+      }
     }
   }
 
-  @SuppressWarnings("unchecked")
-  public void loadData() {
-    if (!Files.exists(DATA_FILE)) return;
+  public boolean loadData() {
+    if (!Files.exists(DATA_FILE)) return !saveBlocked;
 
+    List<ModuleItem> hhnList;
+    List<ModuleItem> cmpList;
+    List<Category> catList;
     try (ObjectInputStream in = new ObjectInputStream(
         new BufferedInputStream(Files.newInputStream(DATA_FILE)))) {
-
-      List<ModuleItem> hhnList = (List<ModuleItem>) in.readObject();
-      List<ModuleItem> cmpList = (List<ModuleItem>) in.readObject();
-
-      AppManager.clearAll();
-      AppManager.clearCategories();
-
-      hhnList.forEach(AppManager::addHhnModule);
-      cmpList.forEach(AppManager::addCompareModule);
-
-      @SuppressWarnings("unchecked")
-      List<Category> catList = (List<Category>) in.readObject();
-      catList.forEach(AppManager::addCategory);
-
-    } catch (IOException | ClassNotFoundException ex) {
+      hhnList = readList(in, ModuleItem.class);
+      cmpList = readList(in, ModuleItem.class);
+      catList = readList(in, Category.class);
+    } catch (IOException | ClassNotFoundException | ClassCastException ex) {
+      saveBlocked = true;
       logger.error("Fehler beim Laden der Module: {}", ex.toString(), ex);
+      try {
+        StringWriter details = new StringWriter();
+        ex.printStackTrace(new PrintWriter(details));
+        Files.writeString(DATA_DIR.resolve("modules-load-error.log"),
+            "Datei: " + DATA_FILE + System.lineSeparator() + details);
+      } catch (IOException logError) {
+        logger.error("Ladefehler konnte nicht in eine Datei geschrieben werden", logError);
+      }
+      return false;
     }
+
+    AppManager.clearAll();
+    AppManager.clearCategories();
+    hhnList.forEach(AppManager::addHhnModule);
+    cmpList.forEach(AppManager::addCompareModule);
+    catList.forEach(AppManager::addCategory);
+    saveBlocked = false;
+    logger.info("Daten geladen aus {} ({} HHN, {} CMP, {} Kategorien)",
+        DATA_FILE, hhnList.size(), cmpList.size(), catList.size());
+    return true;
+  }
+
+  public static Path getDataFile() {
+    return DATA_FILE;
+  }
+
+  private static <T> List<T> readList(ObjectInputStream in, Class<T> type)
+      throws IOException, ClassNotFoundException {
+    if (!(in.readObject() instanceof List<?> entries)) {
+      throw new InvalidObjectException("Erwartete Modulliste fehlt");
+    }
+    List<T> result = new ArrayList<>();
+    for (Object entry : entries) {
+      if (!type.isInstance(entry)) {
+        throw new InvalidObjectException("Ungültiger Eintrag in " + type.getSimpleName() + "-Liste");
+      }
+      result.add(type.cast(entry));
+    }
+    return result;
   }
 
   private static class CompatObjectInputStream extends ObjectInputStream {
