@@ -16,6 +16,8 @@ module calculator.doubledegreehelper {
     requires org.apache.commons.logging;
     requires java.desktop;
     requires java.net.http;
+    // Ohne dieses Modul fehlt im jlink-Image die EC-Kryptografie -> TLS handshake_failure bei GitHub
+    requires jdk.crypto.ec;
 
     opens calculator.doubledegreehelper           to javafx.fxml;
     opens calculator.doubledegreehelper.controller to javafx.fxml;
