@@ -33,6 +33,7 @@ import javafx.scene.input.TransferMode;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
@@ -41,6 +42,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.awt.Desktop;
+import java.time.Instant;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -104,6 +106,7 @@ public class homeController {
         filtered = new FilteredList<>(StudentRegistry.getRecords(), r -> true);
         SortedList<StudentRecord> sorted = new SortedList<>(filtered,
             Comparator.comparing((StudentRecord r) -> !r.isNew())
+                .thenComparing(StudentRecord::isDone)
                 .thenComparingInt(StudentRecord::getNumber));
         studentList.setItems(sorted);
         studentList.setCellFactory(lv -> new StudentCell());
@@ -131,11 +134,9 @@ public class homeController {
         });
 
         countListener = c -> updateCount();
-        StudentRegistry.getRecords().addListener(countListener);
-        // Listener entfernen, sobald die Szene gewechselt wird (Controller wird neu erzeugt)
-        root.sceneProperty().addListener((obs, oldScene, newScene) -> {
-            if (newScene == null) StudentRegistry.getRecords().removeListener(countListener);
-        });
+        // Schwach referenziert: verschwindet mit dem Controller. Nicht an sceneProperty koppeln,
+        // die Hilfe-Tour hängt root kurzzeitig um und hat den Zähler so abgehängt.
+        StudentRegistry.getRecords().addListener(new javafx.collections.WeakListChangeListener<>(countListener));
         updateCount();
         updatePlaceholder();
     }
@@ -143,7 +144,8 @@ public class homeController {
     private void updateCount() {
         List<StudentRecord> all = StudentRegistry.getRecords();
         long fresh = all.stream().filter(StudentRecord::isNew).count();
-        countLabel.setText(all.size() + (fresh > 0 ? " · " + fresh + " neu" : ""));
+        long open = all.stream().filter(r -> !r.isDone()).count();
+        countLabel.setText(all.size() + " · " + open + " offen" + (fresh > 0 ? " · " + fresh + " neu" : ""));
     }
 
     private void updatePlaceholder() {
@@ -162,15 +164,36 @@ public class homeController {
         return n.replace('đ', 'd').replace('Đ', 'D').toLowerCase(Locale.ROOT).trim();
     }
 
+    private static final java.time.format.DateTimeFormatter DATE =
+        java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy").withZone(java.time.ZoneId.systemDefault());
+    private static final java.time.format.DateTimeFormatter DATE_TIME =
+        java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm").withZone(java.time.ZoneId.systemDefault());
+
     private final class StudentCell extends ListCell<StudentRecord> {
         private final Label number = new Label();
         private final Label name = new Label();
         private final Label newBadge = new Label("NEU");
         private final Label missingBadge = new Label();
         private final Button deleteButton = new Button("✕");
+        private final CheckBox doneCheck = new CheckBox();
+        private final Label dateLabel = new Label();
+        private final MenuItem doneItem = new MenuItem();
         private final HBox box;
 
         StudentCell() {
+            // Zellen an die Listenbreite anpassen statt horizontal zu scrollen
+            setPrefWidth(0);
+            doneCheck.getStyleClass().add("done-check");
+            doneCheck.setFocusTraversable(false);
+            doneCheck.setTooltip(new Tooltip("Als erledigt abhaken (ohne Export)"));
+            doneCheck.setOnAction(e -> StudentRegistry.setDone(getItem(), doneCheck.isSelected()));
+            doneCheck.setOnMouseClicked(javafx.event.Event::consume);
+            dateLabel.getStyleClass().add("student-date");
+            dateLabel.setMinWidth(Region.USE_PREF_SIZE);
+            doneItem.setOnAction(e -> {
+                StudentRecord r = getItem();
+                if (r != null) StudentRegistry.setDone(r, !r.isDone());
+            });
             number.getStyleClass().add("student-number");
             name.getStyleClass().add("student-name");
             newBadge.getStyleClass().addAll("badge", "badge-new");
@@ -189,12 +212,12 @@ public class homeController {
             deleteItem.setOnAction(e -> confirmDelete(getItem()));
             MenuItem openItem = new MenuItem("Öffnen");
             openItem.setOnAction(e -> openStudent(getItem()));
-            ContextMenu menu = new ContextMenu(openItem, deleteItem);
+            ContextMenu menu = new ContextMenu(openItem, doneItem, deleteItem);
             emptyProperty().addListener((obs, was, isEmpty) -> setContextMenu(isEmpty ? null : menu));
 
-            box = new HBox(6, number, new Label("-"), name, missingBadge, newBadge, deleteButton);
+            box = new HBox(6, doneCheck, number, new Label("-"), name, missingBadge, newBadge, dateLabel, deleteButton);
             box.setAlignment(Pos.CENTER_LEFT);
-            box.getChildren().get(1).getStyleClass().add("student-name");
+            box.getChildren().get(2).getStyleClass().add("student-name");
 
             setOnMouseClicked(e -> {
                 if (!isEmpty() && getItem() != null && e.getButton() == MouseButton.PRIMARY) {
@@ -218,12 +241,20 @@ public class homeController {
             newBadge.setVisible(item.isNew());
             newBadge.setManaged(item.isNew());
 
+            doneCheck.setSelected(item.isDone());
+            doneItem.setText(item.isDone() ? "Wieder als offen markieren" : "Als erledigt abhaken");
+            box.getStyleClass().remove("done");
+            if (item.isDone()) box.getStyleClass().add("done");
+            dateLabel.setText(DATE.format(Instant.ofEpochMilli(item.getAddedAt())));
+
             String missing = !item.hasXlsx() ? "XLSX fehlt" : null;
             missingBadge.setText(missing);
             missingBadge.setVisible(missing != null);
             missingBadge.setManaged(missing != null);
 
-            setTooltip(new Tooltip("PDF:  " + (item.hasPdf() ? item.getPdfPath() : "–")
+            setTooltip(new Tooltip("Hinzugefügt: " + DATE_TIME.format(Instant.ofEpochMilli(item.getAddedAt()))
+                + (item.getExportedAt() > 0 ? "\nExportiert: " + DATE_TIME.format(Instant.ofEpochMilli(item.getExportedAt())) : "")
+                + "\nPDF:  " + (item.hasPdf() ? item.getPdfPath() : "–")
                 + "\nXLSX: " + (item.hasXlsx() ? item.getXlsxPath() : "–")));
             setText(null);
             setGraphic(box);

@@ -19,6 +19,8 @@ public class StudentRecord implements Serializable {
   private boolean isNew;
   private final long addedAt;
   private long exportedAt;
+  /** Manuell oder per Export abgehakt; null in alten students.dat-Dateien. */
+  private Boolean done;
 
   public StudentRecord(int number, String name) {
     this.number = number;
@@ -45,6 +47,10 @@ public class StudentRecord implements Serializable {
 
   public long getExportedAt() { return exportedAt; }
   public void setExportedAt(long exportedAt) { this.exportedAt = exportedAt; }
+
+  /** Erledigt: manuell abgehakt oder (bei alten Einträgen) schon einmal exportiert. */
+  public boolean isDone() { return done != null ? done : exportedAt > 0; }
+  public void setDone(boolean done) { this.done = done; }
 
   public boolean hasPdf() { return pdfPath != null && !pdfPath.isBlank(); }
   public boolean hasXlsx() { return xlsxPath != null && !xlsxPath.isBlank(); }

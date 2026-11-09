@@ -40,3 +40,8 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+
+### Lokale Daten (echte Studentendaten, nie committen) ###
+BugWithThatData/
+InjectFiles/
+*.exe
