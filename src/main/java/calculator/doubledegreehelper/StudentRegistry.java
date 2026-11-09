@@ -157,13 +157,24 @@ public final class StudentRegistry {
       rec.setPdfPath(AppManager.getFilePath());
       rec.setXlsxPath(AppManager.getThemeFilePath());
       rec.setNew(false);
+      rec.setDone(true);
       rec.setExportedAt(System.currentTimeMillis());
       records.add(rec);
     } else {
       rec.setNew(false);
+      rec.setDone(true);
       rec.setExportedAt(System.currentTimeMillis());
       touch(rec);
     }
+    save();
+  }
+
+  /** Student manuell abhaken (ohne Export) oder wieder öffnen. Abhaken entfernt auch „NEU“. */
+  public static void setDone(StudentRecord rec, boolean done) {
+    if (rec == null) return;
+    rec.setDone(done);
+    if (done) rec.setNew(false);
+    touch(rec);
     save();
   }
 

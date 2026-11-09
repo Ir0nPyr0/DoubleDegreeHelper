@@ -122,6 +122,24 @@
     -fx-text-fill: white;
 }
 
+/* Abhaken und Datum */
+.student-date {
+    -fx-text-fill: -muted;
+    -fx-font-size: 11px;
+}
+.done .student-number,
+.done .student-name {
+    -fx-text-fill: #94a3b8;
+}
+.student-list .list-cell:filled:selected .student-date,
+.student-list .list-cell:filled:selected .done .student-number,
+.student-list .list-cell:filled:selected .done .student-name {
+    -fx-text-fill: white;
+}
+.done-check {
+    -fx-cursor: hand;
+}
+
 /* Löschen-Button in der Studentenliste: nur bei Hover/Auswahl sichtbar */
 .delete-button {
     -fx-background-color: transparent;
