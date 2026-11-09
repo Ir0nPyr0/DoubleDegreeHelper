@@ -111,6 +111,56 @@ public final class UpdateChecker {
     t.start();
   }
 
+  /**
+   * Manuelle Prüfung (Hilfe-Fenster): ignoriert "Diese Version überspringen" und meldet
+   * auch, wenn schon die neueste Version installiert ist.
+   */
+  public static void checkManually(Stage owner, javafx.scene.control.Button button) {
+    String current = AppVersion.get();
+    String oldText = button.getText();
+    button.setDisable(true);
+    button.setText("Suche Updates …");
+    Thread t = new Thread(() -> {
+      Optional<Release> latest = Optional.empty();
+      String error = null;
+      try {
+        latest = fetchLatest();
+      } catch (Exception e) {
+        logger.info("Manuelle Update-Prüfung fehlgeschlagen: {}", e.toString());
+        error = e.getMessage();
+      }
+      Optional<Release> result = latest;
+      String err = error;
+      Platform.runLater(() -> {
+        button.setDisable(false);
+        button.setText(oldText);
+        if (err != null || result.isEmpty()) {
+          Alert a = new Alert(Alert.AlertType.WARNING);
+          a.initOwner(owner);
+          a.setTitle("Nach Updates suchen");
+          a.setHeaderText("Die Update-Prüfung hat nicht geklappt.");
+          a.setContentText((err != null ? err + "\n\n" : "")
+              + "Releases findest du auch hier:\nhttps://github.com/" + RELEASE_REPO + "/releases");
+          a.showAndWait();
+          return;
+        }
+        Release r = result.get();
+        if ("dev".equals(current) || compareVersions(r.version(), current) > 0) {
+          PREFS.remove(SKIP_KEY);
+          offerUpdate(owner, current, r);
+        } else {
+          Alert a = new Alert(Alert.AlertType.INFORMATION);
+          a.initOwner(owner);
+          a.setTitle("Nach Updates suchen");
+          a.setHeaderText("Du hast die neueste Version (" + current + ").");
+          a.showAndWait();
+        }
+      });
+    }, "update-check-manual");
+    t.setDaemon(true);
+    t.start();
+  }
+
   static Optional<Release> fetchLatest() throws IOException, InterruptedException {
     HttpRequest req = api("https://api.github.com/repos/" + RELEASE_REPO + "/releases/latest")
         .header("Accept", "application/vnd.github+json")
@@ -326,12 +376,40 @@ public final class UpdateChecker {
   }
 
   private static void launchInstaller(Path installer) throws IOException {
-    // Desktop.open nutzt unter Windows ShellExecute, dadurch kann der Installer nach Admin-Rechten fragen.
-    if (!java.awt.Desktop.isDesktopSupported()
-        || !java.awt.Desktop.getDesktop().isSupported(java.awt.Desktop.Action.OPEN)) {
-      throw new IOException("Dateien können auf diesem System nicht geöffnet werden");
+    // Kurzen 8.3-Pfad (JULIAN~1) in den echten Pfad auflösen.
+    Path file = installer.toRealPath();
+    IOException last = null;
+    // 1) PowerShell Start-Process: nutzt ShellExecute, fragt also ggf. nach Admin-Rechten.
+    //    Der Pfad geht per Umgebungsvariable rein, damit Leerzeichen/Sonderzeichen kein Quoting-Problem machen.
+    //    Mehrere Versuche, weil der Virenscanner die frisch geladene Datei kurz sperren kann.
+    if (System.getProperty("os.name", "").toLowerCase().contains("win")) {
+      for (int attempt = 0; attempt < 3; attempt++) {
+        try {
+          ProcessBuilder pb = new ProcessBuilder("powershell.exe", "-NoProfile", "-NonInteractive",
+              "-ExecutionPolicy", "Bypass", "-Command", "Start-Process -FilePath $env:DDH_INSTALLER");
+          pb.environment().put("DDH_INSTALLER", file.toString());
+          pb.redirectErrorStream(true);
+          Process p = pb.start();
+          String out = new String(p.getInputStream().readAllBytes()).trim();
+          if (p.waitFor() == 0) return;
+          last = new IOException("Start-Process fehlgeschlagen: " + out);
+        } catch (IOException ex) {
+          last = ex;
+        } catch (InterruptedException ex) {
+          Thread.currentThread().interrupt();
+          break;
+        }
+        try { Thread.sleep(1500); } catch (InterruptedException ex) { Thread.currentThread().interrupt(); break; }
+      }
+      logger.warn("Installer-Start per PowerShell fehlgeschlagen, versuche Desktop.open", last);
     }
-    java.awt.Desktop.getDesktop().open(installer.toFile());
+    // 2) Fallback: Desktop.open (ebenfalls ShellExecute).
+    if (java.awt.Desktop.isDesktopSupported()
+        && java.awt.Desktop.getDesktop().isSupported(java.awt.Desktop.Action.OPEN)) {
+      java.awt.Desktop.getDesktop().open(file.toFile());
+      return;
+    }
+    throw last != null ? last : new IOException("Dateien können auf diesem System nicht geöffnet werden");
   }
 
   private static void showError(Stage owner, Release r, String message) {
