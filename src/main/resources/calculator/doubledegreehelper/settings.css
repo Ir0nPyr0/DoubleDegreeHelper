@@ -103,3 +103,56 @@
     -fx-background-radius: 6;
     -fx-text-fill: #b91c1c;
 }
+
+/* Einheitliche Höhe und vertikal zentrierter Text in Feldern und Dropdowns */
+.card .text-field,
+.card .combo-box-base,
+.card .check-combo-box {
+    -fx-pref-height: 30;
+    -fx-min-height: 30;
+    -fx-max-height: 30;
+}
+.card .combo-box-base > .list-cell,
+.card .check-combo-box > .list-cell,
+.card .check-combo-box .label {
+    -fx-alignment: center-left;
+    -fx-padding: 0 0 0 8;
+}
+.card .combo-box-base > .arrow-button,
+.card .check-combo-box > .arrow-button {
+    -fx-padding: 0 8 0 8;
+}
+
+/* Zuordnungs-Kasten VGU -> HHN */
+.pair-box {
+    -fx-background-color: #eff6ff;
+    -fx-border-color: #bfdbfe;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-padding: 6 8 6 8;
+}
+.pair-head {
+    -fx-text-fill: #1d4ed8;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+.pair-tag {
+    -fx-background-color: #2563eb;
+    -fx-text-fill: white;
+    -fx-background-radius: 4;
+    -fx-padding: 0 5 0 5;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+}
+.pair-name {
+    -fx-text-fill: #1e293b;
+    -fx-font-size: 12px;
+}
+.pair-meta {
+    -fx-text-fill: -muted;
+    -fx-font-size: 11px;
+}
+.paired-label {
+    -fx-text-fill: #1d4ed8;
+    -fx-font-size: 11px;
+}

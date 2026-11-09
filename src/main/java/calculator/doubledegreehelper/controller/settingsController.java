@@ -9,6 +9,7 @@ import calculator.doubledegreehelper.SceneManager;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
+import java.util.List;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
@@ -248,6 +249,9 @@ public class settingsController {
         private final ObservableList<ModuleItem> otherList;
         private boolean updating = false;
         private final ComboBox<Category> categoryBox = new ComboBox<>();
+        /** VGU: Kasten mit den zugeordneten HHN-Modulen; HHN: Hinweis, zu welchem VGU-Modul es gehört. */
+        private final VBox pairBox = new VBox(4);
+        private final Label pairedLabel = new Label();
 
         ModuleCell(ObservableList<ModuleItem> otherList, boolean multiSelect) {
             this.otherList = otherList;
@@ -347,6 +351,7 @@ public class settingsController {
                             ch.getAddedSubList().forEach(m -> AppManager.addComparableModule(it, m));
                             ch.getRemoved().forEach(m -> AppManager.removeComparableModule(it, m));
                         }
+                        if (INSTANCE != null) INSTANCE.hhnModuleContainer.refresh();
                     }
                     checkCombo.setPrefWidth(Region.USE_COMPUTED_SIZE);
                     checkCombo.requestLayout();
@@ -357,18 +362,26 @@ public class settingsController {
                 HBox.setHgrow(checkCombo, Priority.ALWAYS);
                 Label arrow = new Label("→");
                 arrow.getStyleClass().add("arrow");
-                checkCombo.getCheckModel().getCheckedItems().addListener((ListChangeListener<ModuleItem>) ch -> updateMappedStyle());
+                checkCombo.getCheckModel().getCheckedItems().addListener((ListChangeListener<ModuleItem>) ch -> {
+                    updateMappedStyle();
+                    updatePairBox();
+                });
+                pairBox.getStyleClass().add("pair-box");
                 container = new VBox(6,
                     row(numberField, nameField, removeBtn),
-                    row(semesterBox, ectsField, arrow, checkCombo));
+                    row(semesterBox, ectsField, arrow, checkCombo),
+                    pairBox);
             } else {
                 checkCombo = null;
                 categoryBox.setPromptText("Kategorie");
                 categoryBox.setMaxWidth(Double.MAX_VALUE);
                 HBox.setHgrow(categoryBox, Priority.ALWAYS);
+                pairedLabel.getStyleClass().add("paired-label");
+                pairedLabel.setWrapText(true);
                 container = new VBox(6,
                     row(numberField, nameField, removeBtn),
-                    row(semesterBox, ectsField, categoryBox));
+                    row(semesterBox, ectsField, categoryBox),
+                    pairedLabel);
             }
             container.getStyleClass().add("card");
             // Zellen an die Listenbreite anpassen statt horizontal zu scrollen
@@ -401,6 +414,47 @@ public class settingsController {
             return h;
         }
 
+        /** Zeigt die zusammengehörenden Module als gemeinsamen Kasten an. */
+        private void updatePairBox() {
+            ModuleItem it = getItem();
+            if (isHhn) {
+                String vgu = it == null ? "" : AppManager.getCompareModules().stream()
+                    .filter(c -> c.getComparableNumber().contains(it))
+                    .map(c -> c.getModulName())
+                    .collect(java.util.stream.Collectors.joining(", "));
+                pairedLabel.setText(vgu.isEmpty() ? "" : "Angerechnet aus VGU: " + vgu);
+                pairedLabel.setVisible(!vgu.isEmpty());
+                pairedLabel.setManaged(!vgu.isEmpty());
+                return;
+            }
+            pairBox.getChildren().clear();
+            List<ModuleItem> mapped = it == null ? List.of() : it.getComparableNumber();
+            if (!mapped.isEmpty()) {
+                Label head = new Label("Zählt als HHN-Modul" + (mapped.size() > 1 ? "e" : ""));
+                head.getStyleClass().add("pair-head");
+                pairBox.getChildren().add(head);
+                for (ModuleItem h : mapped) {
+                    Label tag = new Label("HHN");
+                    tag.getStyleClass().add("pair-tag");
+                    String nr = h.getModulNumber() == null || h.getModulNumber().isBlank() ? "" : h.getModulNumber() + "  ";
+                    Label name = new Label(nr + h.getModulName());
+                    name.getStyleClass().add("pair-name");
+                    name.setMaxWidth(Double.MAX_VALUE);
+                    HBox.setHgrow(name, Priority.ALWAYS);
+                    String meta = (h.getEcts() > 0 ? h.getEcts() + " ECTS" : "")
+                        + (h.getCategory() != null ? (h.getEcts() > 0 ? " · " : "") + h.getCategory().getName() : "");
+                    Label metaL = new Label(meta);
+                    metaL.getStyleClass().add("pair-meta");
+                    metaL.setMinWidth(Region.USE_PREF_SIZE);
+                    HBox line = new HBox(6, tag, name, metaL);
+                    line.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+                    pairBox.getChildren().add(line);
+                }
+            }
+            pairBox.setVisible(!mapped.isEmpty());
+            pairBox.setManaged(!mapped.isEmpty());
+        }
+
         private void updateMappedStyle() {
             if (isHhn) return;
             ModuleItem it = getItem();
@@ -428,6 +482,7 @@ public class settingsController {
                     updating = false;
                     updateMappedStyle();
                 }
+                updatePairBox();
                 setGraphic(container);
             }
         }

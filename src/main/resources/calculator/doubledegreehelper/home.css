@@ -61,6 +61,20 @@
 .drop-zone.drop-active .drop-title {
     -fx-text-fill: -accent;
 }
+.drop-zone-large {
+    -fx-border-width: 2.5;
+    -fx-padding: 32;
+}
+.drop-zone-large .drop-title {
+    -fx-font-size: 20px;
+}
+.drop-icon {
+    -fx-font-size: 54px;
+    -fx-text-fill: #94a3b8;
+}
+.drop-zone.drop-active .drop-icon {
+    -fx-text-fill: -accent;
+}
 
 /* Studentenliste */
 .student-list {
