@@ -30,6 +30,7 @@ public class App extends Application {
                 + "\n\nBitte die Anwendung schließen und eine passende Sicherung einspielen.");
             alert.showAndWait();
         }
+        UpdateChecker.checkInBackground(stage);
     }
     @Override
     public void stop() throws Exception {
