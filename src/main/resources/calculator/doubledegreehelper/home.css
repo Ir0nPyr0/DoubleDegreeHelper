@@ -107,3 +107,28 @@
     -fx-base: -accent;
     -fx-text-fill: white;
 }
+
+/* Löschen-Button in der Studentenliste: nur bei Hover/Auswahl sichtbar */
+.delete-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: -muted;
+    -fx-padding: 0 6 0 6;
+    -fx-font-size: 13px;
+    -fx-cursor: hand;
+    -fx-opacity: 0;
+}
+.student-list .list-cell:hover .delete-button,
+.student-list .list-cell:selected .delete-button {
+    -fx-opacity: 1;
+}
+.delete-button:hover {
+    -fx-background-color: #fee2e2;
+    -fx-background-radius: 6;
+    -fx-text-fill: #b91c1c;
+}
+.student-list .list-cell:filled:selected .delete-button {
+    -fx-text-fill: white;
+}
+.student-list .list-cell:filled:selected .delete-button:hover {
+    -fx-text-fill: #b91c1c;
+}

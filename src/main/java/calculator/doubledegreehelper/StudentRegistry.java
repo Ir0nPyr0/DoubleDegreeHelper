@@ -167,6 +167,24 @@ public final class StudentRegistry {
     save();
   }
 
+  // ---------------------------------------------------------------- Löschen
+
+  /**
+   * Entfernt einen Studenten aus der Liste. Die Dateien selbst bleiben unangetastet.
+   * Der Ordner-Scan nimmt ihn nicht wieder auf (Dateien sind als bekannt markiert);
+   * erneutes Hineinziehen der PDF fügt ihn wieder hinzu. Eine verknüpfte XLSX wird
+   * vorgemerkt, damit sie dann automatisch wieder zugeordnet wird.
+   */
+  public static void remove(StudentRecord rec) {
+    if (rec == null || !records.remove(rec)) return;
+    highlight.remove(rec.getNumber());
+    if (rec.hasXlsx()) {
+      pendingXlsx.put(rec.getNumber(), new PendingXlsx(rec.getXlsxPath(), rec.getName()));
+    }
+    logger.info("Student {} aus der Liste entfernt", rec);
+    save();
+  }
+
   // ---------------------------------------------------------------- Einlesen
 
   /** Alle PDF/XLSX in den konfigurierten Ordnern einlesen, die neu oder geändert sind. */

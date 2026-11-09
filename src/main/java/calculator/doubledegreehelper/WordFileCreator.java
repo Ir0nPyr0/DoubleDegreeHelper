@@ -26,6 +26,11 @@ public class WordFileCreator {
   private static Student student;
   private static List<StudentModule> modules = new ArrayList<>();
 
+  /** Ordner, in den der letzte Export geschrieben wurde (Speicherort/Matrikelnummer). */
+  public static Path getLastOutputDir() {
+    return destination;
+  }
+
   public static void createWord(Path dest, Student stud, List<StudentModule> studentModule) throws IOException {
     Path studentDir = dest.resolve(String.valueOf(stud.getNumber()));
     Files.createDirectories(studentDir);
