@@ -395,6 +395,7 @@ public class gradeSelectionController {
     private void handleCreateWordFile(ActionEvent ev) {
         String out = AppManager.getSavePath();
         if (out == null || out.isBlank() || !new File(out).isDirectory()) {
+            calculator.doubledegreehelper.HelpLog.add("Ungültiger Speicherordner: " + out);
             new Alert(Alert.AlertType.ERROR, "Ungültiger Speicherordner:\n" + out)
                 .showAndWait();
             return;
@@ -478,6 +479,7 @@ public class gradeSelectionController {
             createButton.setDisable(false);
             Throwable ex = job.getException();
             ex.printStackTrace();
+            calculator.doubledegreehelper.HelpLog.add("Export fehlgeschlagen (" + student.getNumber() + "): " + ex.getMessage());
             Alert err = new Alert(Alert.AlertType.ERROR);
             err.setHeaderText(format.wantsPdf() ? "Fehler beim Erstellen der Dateien" : "Fehler beim Erstellen der Word-Datei");
             err.setContentText(ex.getMessage());
@@ -496,7 +498,10 @@ public class gradeSelectionController {
                 java.awt.Desktop.getDesktop().open(dir.toFile());
             } catch (Exception ex) {
                 javafx.application.Platform.runLater(() ->
-                    new Alert(Alert.AlertType.WARNING, "Ordner konnte nicht geöffnet werden:\n" + dir).showAndWait());
+                {
+                    calculator.doubledegreehelper.HelpLog.add("Ordner konnte nicht geöffnet werden: " + dir);
+                    new Alert(Alert.AlertType.WARNING, "Ordner konnte nicht geöffnet werden:\n" + dir).showAndWait();
+                });
             }
         }, "open-folder");
         t.setDaemon(true);

@@ -19,6 +19,7 @@ public class App extends Application {
         SceneManager.init(stage);
         SceneManager.switchTo(SceneManager.View.HOME);
         if (!loaded) {
+            HelpLog.add("Moduldaten konnten nicht geladen werden: " + SaveHandler.getDataFile());
             Alert alert = new Alert(Alert.AlertType.ERROR);
             alert.initOwner(stage);
             alert.setTitle("Moduldaten konnten nicht geladen werden");

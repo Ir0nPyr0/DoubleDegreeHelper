@@ -13,10 +13,11 @@
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane fx:id="root" styleClass="home-root" stylesheets="@home.css" prefHeight="650.0" prefWidth="1200.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="calculator.doubledegreehelper.controller.homeController">
+<BorderPane fx:id="root" styleClass="home-root" stylesheets="@home.css, @help.css" prefHeight="650.0" prefWidth="1200.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="calculator.doubledegreehelper.controller.homeController">
 
    <!-- Links: Suche + Studentenliste -->
    <left>
@@ -109,11 +110,13 @@
       </VBox>
    </right>
 
-   <!-- Unten rechts: Version -->
+   <!-- Unten: Hilfe links, Version rechts -->
    <bottom>
-      <HBox alignment="CENTER_RIGHT">
+      <HBox alignment="CENTER_LEFT">
          <padding><Insets top="4.0" right="12.0" bottom="6.0" left="12.0" /></padding>
          <children>
+            <Button fx:id="helpButton" mnemonicParsing="false" text="Hilfe" styleClass="help-button" />
+            <Region HBox.hgrow="ALWAYS" />
             <Label fx:id="versionLabel" styleClass="version-label" />
          </children>
       </HBox>

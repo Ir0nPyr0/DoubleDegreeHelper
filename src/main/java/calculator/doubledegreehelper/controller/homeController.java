@@ -3,6 +3,9 @@ package calculator.doubledegreehelper.controller;
 import calculator.doubledegreehelper.AppManager;
 import calculator.doubledegreehelper.AppVersion;
 import calculator.doubledegreehelper.ExportSettings;
+import calculator.doubledegreehelper.HelpDialog;
+import calculator.doubledegreehelper.HelpLog;
+import calculator.doubledegreehelper.OnboardingTour;
 import calculator.doubledegreehelper.SceneManager;
 import calculator.doubledegreehelper.StudentRegistry;
 import calculator.doubledegreehelper.ThemeReader;
@@ -11,6 +14,7 @@ import calculator.doubledegreehelper.student.Student;
 import calculator.doubledegreehelper.student.StudentRecord;
 import javafx.animation.FadeTransition;
 import javafx.animation.Interpolator;
+import javafx.animation.PauseTransition;
 import javafx.animation.ParallelTransition;
 import javafx.animation.TranslateTransition;
 import javafx.collections.ListChangeListener;
@@ -19,10 +23,12 @@ import javafx.collections.transformation.SortedList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.input.DragEvent;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.BorderPane;
@@ -62,6 +68,10 @@ public class homeController {
     @FXML private Label saveFolderLabel;
     @FXML private RadioButton wordRadio, pdfRadio, bothRadio;
     @FXML private CheckBox openFolderCheck;
+    @FXML private Button helpButton;
+
+    private static final String PREF_TOUR_DONE = "onboardingTourDone";
+    private static boolean tourOfferedThisSession;
 
     private final Label placeholder = new Label();
     private FilteredList<StudentRecord> filtered;
@@ -80,6 +90,7 @@ public class homeController {
         setupFolders();
         setupDragAndDrop();
         setupExport();
+        setupHelp();
 
         if (StudentRegistry.claimStartupScan() && hasAnyFolder()) {
             runFolderScan(true);
@@ -264,6 +275,7 @@ public class homeController {
     private void openStudent(StudentRecord rec) {
         if (rec == null) return;
         if (!rec.hasPdf() || !Files.isRegularFile(Path.of(rec.getPdfPath()))) {
+            HelpLog.add("Transkript nicht gefunden: " + rec.getPdfPath());
             new Alert(Alert.AlertType.ERROR,
                 "Das Transkript wurde nicht gefunden:\n" + rec.getPdfPath()
                     + "\n\nZieh die PDF bitte erneut in das Feld, dann wird die Verknüpfung aktualisiert.")
@@ -291,6 +303,7 @@ public class homeController {
             SceneManager.switchTo(SceneManager.View.SELECTION);
         } catch (Exception ex) {
             logger.error("Student {} konnte nicht geöffnet werden", rec.getNumber(), ex);
+            HelpLog.add("Fehler beim Öffnen von " + rec + ": " + ex.getMessage());
             new Alert(Alert.AlertType.ERROR, "Fehler beim Öffnen von " + rec + ":\n" + ex.getMessage())
                 .showAndWait();
         }
@@ -348,6 +361,7 @@ public class homeController {
     private void runFolderScan(boolean onlyChanged) {
         if (!hasAnyFolder()) {
             statusLabel.setText("Bitte zuerst einen PDF- oder XLSX-Ordner festlegen.");
+            HelpLog.add("Aktualisieren ohne Quellordner: bitte zuerst einen PDF- oder XLSX-Ordner festlegen.");
             return;
         }
         statusLabel.setText("Suche nach neuen Dateien…");
@@ -371,6 +385,7 @@ public class homeController {
             sb.append(' ').append(r.errors.size())
               .append(r.errors.size() == 1 ? " Datei übersprungen." : " Dateien übersprungen.");
             statusLabel.setTooltip(new Tooltip(String.join("\n", r.errors)));
+            HelpLog.addAll("Übersprungen: ", r.errors);
         } else {
             statusLabel.setTooltip(null);
         }
@@ -456,6 +471,102 @@ public class homeController {
         dropTitle.setText(active ? "Loslassen zum Einlesen" : "PDF- und XLSX-Dateien hierher ziehen");
     }
 
+    // ------------------------------------------------------------------ Hilfe & Einführung
+
+    private void setupHelp() {
+        Label icon = new Label("?");
+        icon.getStyleClass().add("help-icon");
+        helpButton.setGraphic(icon);
+        helpButton.setGraphicTextGap(6);
+        helpButton.setTooltip(new Tooltip("Hilfe, Fehlermeldungen und Einführung (F1)"));
+        helpButton.setOnAction(e -> openHelp());
+        root.addEventHandler(KeyEvent.KEY_PRESSED, e -> {
+            if (e.getCode() == KeyCode.F1 && !OnboardingTour.isRunning()) {
+                e.consume();
+                openHelp();
+            }
+        });
+
+        // Beim allerersten Start die Tour automatisch zeigen
+        Preferences prefs = Preferences.userNodeForPackage(homeController.class);
+        if (!prefs.getBoolean(PREF_TOUR_DONE, false) && !tourOfferedThisSession) {
+            tourOfferedThisSession = true;
+            root.sceneProperty().addListener(new javafx.beans.value.ChangeListener<>() {
+                @Override
+                public void changed(javafx.beans.value.ObservableValue<? extends javafx.scene.Scene> obs,
+                                    javafx.scene.Scene old, javafx.scene.Scene scene) {
+                    if (scene == null) return;
+                    obs.removeListener(this); // nur einmal
+                    PauseTransition wait = new PauseTransition(Duration.millis(500));
+                    wait.setOnFinished(e -> {
+                        if (root.getScene() != null) startTour();
+                    });
+                    wait.play();
+                }
+            });
+        }
+    }
+
+    private void openHelp() {
+        HelpDialog.show(root.getScene() != null ? root.getScene().getWindow() : null, this::startTour);
+    }
+
+    private void startTour() {
+        Node exportFormat = wordRadio.getParent();
+        Node statusRow = statusLabel.getParent();
+        List<OnboardingTour.Step> steps = List.of(
+            OnboardingTour.step("Willkommen beim DoubleDegreeHelper",
+                "Diese kurze Tour zeigt dir, wo du was findest. Das jeweils erklärte Element ist "
+                    + "hervorgehoben, der Rest abgedunkelt.\n\n"
+                    + "Weiter mit „Weiter“ oder den Pfeiltasten, Esc beendet die Tour. "
+                    + "Du kannst sie jederzeit über „Hilfe“ unten links erneut starten."),
+            OnboardingTour.step("Dateien einlesen",
+                "Zieh hier die PDF-Transkripte der VGU und die XLSX-Themenlisten hinein, auch mehrere auf einmal. "
+                    + "PDF und XLSX werden automatisch über die Matrikelnummer (VGU ID) zusammengeführt. "
+                    + "Eine XLSX darf mehrere Studenten enthalten.",
+                dropZone),
+            OnboardingTour.step("Studentenliste",
+                "Alle eingelesenen Studenten. „NEU“ heißt: noch nicht exportiert. "
+                    + "„XLSX fehlt“ heißt: Thema und Abgabedatum fehlen noch.\n\n"
+                    + "Ein Klick öffnet den Studenten direkt in der Notenauswahl. "
+                    + "Mit ✕ (beim Überfahren sichtbar) entfernst du ihn aus der Liste, die Dateien bleiben erhalten.",
+                studentList),
+            OnboardingTour.step("Suche",
+                "Filtert die Liste nach Matrikelnummer oder Name. Vietnamesische Akzente musst du nicht mittippen.",
+                searchField),
+            OnboardingTour.step("Quellordner",
+                "Optional: Lege fest, in welchen Ordnern deine PDFs und XLSX-Dateien liegen. "
+                    + "Neue Dateien darin werden dann bei jedem Start automatisch gefunden.",
+                pdfFolderButton, pdfFolderLabel, xlsxFolderButton, xlsxFolderLabel),
+            OnboardingTour.step("Studenten aktualisieren",
+                "Durchsucht die Quellordner sofort nach neuen oder geänderten Dateien. "
+                    + "Darunter steht das Ergebnis. Wurden Dateien übersprungen, halte die Maus auf den Text, "
+                    + "um den Grund zu sehen.",
+                refreshButton, statusRow),
+            OnboardingTour.step("Speicherort",
+                "Hier landen die erstellten Zeugnisse, Diploma Supplements und Urkunden.",
+                saveFolderButton, saveFolderLabel),
+            OnboardingTour.step("Format",
+                "Wähle, ob Word-Dateien, PDFs oder beides erstellt werden. Für PDF wird Microsoft Word im "
+                    + "Hintergrund benutzt. Optional öffnet sich nach dem Export direkt der Ordner.",
+                exportFormat, openFolderCheck),
+            OnboardingTour.step("Einstellungen",
+                "Hier pflegst du die HHN-Module und ordnest die VGU-Module zu. "
+                    + "Module ohne Zuordnung erscheinen später unter „Nicht zugeordnet“.",
+                settingsButton),
+            OnboardingTour.step("Vorlagen bearbeiten",
+                "Öffnet die Word-Vorlagen für Zeugnis, Diploma Supplement und Urkunde. "
+                    + "Texte darfst du ändern, Platzhalter in geschweiften Klammern wie {BDATE} aber nicht löschen.",
+                transcriptEditButton, diplomaEditButton, certificateEditButton),
+            OnboardingTour.step("Hilfe",
+                "Wenn etwas schiefgeht: Hier findest du die letzten Fehlermeldungen, Lösungen für häufige "
+                    + "Probleme und diese Tour. Tastenkürzel: F1.",
+                helpButton)
+        );
+        OnboardingTour.start(root, steps, () ->
+            Preferences.userNodeForPackage(homeController.class).putBoolean(PREF_TOUR_DONE, true));
+    }
+
     // ------------------------------------------------------------------ bisherige Aktionen
 
     private void handleSettingsButtonAction(ActionEvent event) {
@@ -473,6 +584,7 @@ public class homeController {
             if (Files.notExists(dest)) {
                 try (InputStream in = homeController.class.getResourceAsStream(resourcePath)) {
                     if (in == null) {
+                        HelpLog.add("Ressource nicht gefunden: " + resourcePath);
                         new Alert(Alert.AlertType.ERROR, "Ressource nicht gefunden:\n" + resourcePath)
                             .showAndWait();
                         return;
@@ -482,6 +594,7 @@ public class homeController {
             }
             Desktop.getDesktop().open(dest.toFile());
         } catch (IOException ex) {
+            HelpLog.add("Vorlage konnte nicht geöffnet werden: " + ex.getMessage());
             new Alert(Alert.AlertType.ERROR, "Datei konnte nicht geöffnet werden:\n" + ex.getMessage())
                 .showAndWait();
         }

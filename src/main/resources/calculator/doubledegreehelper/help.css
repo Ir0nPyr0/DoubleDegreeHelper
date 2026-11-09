@@ -1,0 +1,123 @@
+/* Hilfe-Fenster und Einführungstour */
+
+.help-root {
+    -accent: #2563eb;
+    -fx-background-color: white;
+    -fx-font-size: 13px;
+}
+.help-scroll, .help-scroll > .viewport {
+    -fx-background-color: white;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+}
+.help-footer {
+    -fx-background-color: #f8fafc;
+    -fx-border-color: #e2e8f0;
+    -fx-border-width: 1 0 0 0;
+}
+.help-card {
+    -fx-background-color: #eff6ff;
+    -fx-background-radius: 10;
+    -fx-border-color: #bfdbfe;
+    -fx-border-radius: 10;
+    -fx-padding: 14 16 14 16;
+}
+.help-section-title {
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #0f172a;
+}
+.help-muted {
+    -fx-text-fill: #64748b;
+    -fx-font-size: 12px;
+}
+.help-log {
+    -fx-font-family: "Consolas", "Menlo", monospace;
+    -fx-font-size: 12px;
+    -fx-control-inner-background: #fef2f2;
+    -fx-text-fill: #7f1d1d;
+}
+.help-problem > .title {
+    -fx-font-weight: bold;
+}
+.help-problem > .content {
+    -fx-padding: 10 14 12 14;
+}
+.help-cause {
+    -fx-text-fill: #475569;
+    -fx-font-style: italic;
+    -fx-padding: 0 0 2 0;
+}
+.help-step-num {
+    -fx-text-fill: #2563eb;
+    -fx-font-weight: bold;
+}
+.primary {
+    -fx-base: #2563eb;
+    -fx-text-fill: white;
+}
+
+/* Hilfe-Button unten links im Hauptmenü */
+.help-button {
+    -fx-background-color: transparent;
+    -fx-background-radius: 999;
+    -fx-border-color: #cbd5e1;
+    -fx-border-radius: 999;
+    -fx-text-fill: #334155;
+    -fx-padding: 3 12 3 8;
+    -fx-cursor: hand;
+}
+.help-button:hover {
+    -fx-background-color: #eff6ff;
+    -fx-border-color: #2563eb;
+    -fx-text-fill: #2563eb;
+}
+.help-button .help-icon {
+    -fx-background-color: #2563eb;
+    -fx-background-radius: 999;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 11px;
+    -fx-min-width: 18;
+    -fx-min-height: 18;
+    -fx-alignment: center;
+}
+
+/* Tour */
+.tour-ring {
+    -fx-stroke: #60a5fa;
+    -fx-stroke-width: 3;
+    -fx-effect: dropshadow(gaussian, rgba(96, 165, 250, 0.7), 14, 0.3, 0, 0);
+}
+.tour-card {
+    -fx-background-color: white;
+    -fx-background-radius: 12;
+    -fx-padding: 16 18 14 18;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.35), 24, 0.15, 0, 6);
+}
+.tour-counter {
+    -fx-text-fill: #2563eb;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+.tour-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #0f172a;
+}
+.tour-text {
+    -fx-font-size: 13px;
+    -fx-text-fill: #334155;
+    -fx-line-spacing: 2;
+    -fx-padding: 0 0 6 0;
+}
+.tour-link {
+    -fx-background-color: transparent;
+    -fx-text-fill: #64748b;
+    -fx-padding: 4 2 4 2;
+    -fx-cursor: hand;
+}
+.tour-link:hover {
+    -fx-text-fill: #0f172a;
+    -fx-underline: true;
+}
