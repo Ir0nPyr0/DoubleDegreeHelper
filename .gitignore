@@ -46,3 +46,12 @@ BugWithThatData/
 InjectFiles/
 *.exe
 src/main/resources/calculator/update.properties
+
+### Daten der App / Testdaten (nie committen) ###
+*.dat
+*.pdf
+*.xlsx
+*.xls
+*.bundle
+DoubleDegreeHelperData/
+.gradle/
