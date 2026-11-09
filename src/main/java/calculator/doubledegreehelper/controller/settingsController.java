@@ -13,7 +13,9 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.TextFormatter.Change;
+import javafx.collections.transformation.FilteredList;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import javafx.scene.layout.Priority;
 import javafx.util.Callback;
 import javafx.util.StringConverter;
@@ -25,9 +27,11 @@ import java.util.stream.Collectors;
 
 public class settingsController {
     @FXML
-    private TabPane moduleTabPane;
+    private Button backButton, saveButton, addVguButton, addHhnButton, addCategoryButton;
     @FXML
-    private Button backButton, saveButton, addButton;
+    private Label vguCount, hhnCount, categoryCount, saveStatus;
+    @FXML
+    private TextField vguSearch, hhnSearch;
     @FXML
     private ListView<ModuleItem> hhnModuleContainer, compareModuleContainer;
     @FXML
@@ -41,8 +45,16 @@ public class settingsController {
         INSTANCE = this;
         ObservableList<ModuleItem> hhnList = AppManager.getHhnModules();
         ObservableList<ModuleItem> cmpList = AppManager.getCompareModules();
-        hhnModuleContainer.setItems(hhnList);
-        compareModuleContainer.setItems(cmpList);
+        FilteredList<ModuleItem> hhnFiltered = new FilteredList<>(hhnList, m -> true);
+        FilteredList<ModuleItem> cmpFiltered = new FilteredList<>(cmpList, m -> true);
+        hhnModuleContainer.setItems(hhnFiltered);
+        compareModuleContainer.setItems(cmpFiltered);
+        hhnSearch.textProperty().addListener((o, a, q) -> hhnFiltered.setPredicate(m -> matches(m, q)));
+        vguSearch.textProperty().addListener((o, a, q) -> cmpFiltered.setPredicate(m -> matches(m, q)));
+        hhnList.addListener((ListChangeListener<ModuleItem>) c -> updateCounts());
+        cmpList.addListener((ListChangeListener<ModuleItem>) c -> updateCounts());
+        AppManager.getCategories().addListener((ListChangeListener<Category>) c -> updateCounts());
+        updateCounts();
 
         hhnList.addListener((ListChangeListener<ModuleItem>) ch -> {
             while (ch.next()) {
@@ -63,25 +75,28 @@ public class settingsController {
             compareModuleContainer.refresh();
         });
 
-        moduleTabPane.getSelectionModel().selectedIndexProperty().addListener((o, oldI, newI) -> {
-            hhnModuleContainer.refresh();
-            compareModuleContainer.refresh();
-        });
-
         categoryContainer.setItems(AppManager.getCategories());
         categoryContainer.setCellFactory(lv -> new ListCell<>() {
             private final TextField nameField = new TextField();
-            private final Button delBtn = new Button("X");
+            private final Button delBtn = new Button("✕");
             private final TextField priority = new TextField();
-            private final HBox box = new HBox(5, nameField, priority, delBtn);
+            private final HBox box = new HBox(6, nameField, priority, delBtn);
 
             {
-                nameField.setPromptText("Kategorien name");
+                nameField.setPromptText("Kategoriename");
+                priority.setPromptText("Prio");
+                priority.setPrefWidth(52);
+                priority.setTooltip(new Tooltip("Priorität: bestimmt die Reihenfolge im Zeugnis"));
+                delBtn.getStyleClass().add("delete-button");
+                delBtn.setFocusTraversable(false);
+                box.getStyleClass().add("card");
+                setPrefWidth(0);
+                box.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
 
                 HBox.setHgrow(nameField, Priority.ALWAYS);
                 delBtn.setOnAction(e -> {
                     Category c = getItem();
-                    if (c != null) {
+                    if (c != null && confirmDelete("Kategorie", c.getName())) {
                         AppManager.removeCategory(c);
                     }
                 });
@@ -120,11 +135,70 @@ public class settingsController {
 
         backButton.setOnAction(this::handleBack);
         saveButton.setOnAction(this::handleSave);
-        addButton.setOnAction(this::handleAdd);
+        addVguButton.setOnAction(e -> {
+            vguSearch.clear();
+            ModuleItem m = new ModuleItem(false, Semester.WINTER, "", 0, "");
+            AppManager.addCompareModule(m);
+            reveal(compareModuleContainer, m);
+        });
+        addHhnButton.setOnAction(e -> {
+            hhnSearch.clear();
+            ModuleItem m = new ModuleItem(true, Semester.WINTER, "", 0, "");
+            AppManager.addHhnModule(m);
+            reveal(hhnModuleContainer, m);
+        });
+        addCategoryButton.setOnAction(e -> {
+            Category neu = new Category("");
+            AppManager.addCategory(neu);
+            reveal(categoryContainer, neu);
+        });
+    }
+
+    private static <T> void reveal(ListView<T> list, T item) {
+        list.refresh();
+        int idx = list.getItems().indexOf(item);
+        if (idx >= 0) {
+            list.scrollTo(idx);
+            list.getSelectionModel().select(idx);
+        }
+    }
+
+    private static boolean matches(ModuleItem m, String q) {
+        if (q == null || q.isBlank()) return true;
+        String needle = q.trim().toLowerCase(java.util.Locale.ROOT);
+        String name = m.getModulName() == null ? "" : m.getModulName().toLowerCase(java.util.Locale.ROOT);
+        String nr = m.getModulNumber() == null ? "" : m.getModulNumber().toLowerCase(java.util.Locale.ROOT);
+        return name.contains(needle) || nr.contains(needle);
+    }
+
+    private void updateCounts() {
+        vguCount.setText(String.valueOf(AppManager.getCompareModules().size()));
+        hhnCount.setText(String.valueOf(AppManager.getHhnModules().size()));
+        categoryCount.setText(String.valueOf(AppManager.getCategories().size()));
+        long unmapped = AppManager.getCompareModules().stream()
+            .filter(m -> m.getComparableNumber().isEmpty()).count();
+        vguCount.setText(AppManager.getCompareModules().size()
+            + (unmapped > 0 ? " · " + unmapped + " ohne Zuordnung" : ""));
+    }
+
+    static boolean confirmDelete(String what, String name) {
+        ButtonType delete = new ButtonType("Löschen", ButtonBar.ButtonData.OK_DONE);
+        ButtonType cancel = new ButtonType("Abbrechen", ButtonBar.ButtonData.CANCEL_CLOSE);
+        String label = name == null || name.isBlank() ? "(ohne Namen)" : name;
+        Alert a = new Alert(Alert.AlertType.CONFIRMATION,
+            "Die Änderung wird erst mit „Speichern“ in die modules.dat geschrieben.", cancel, delete);
+        a.setTitle(what + " löschen");
+        a.setHeaderText(what + " „" + label + "“ löschen?");
+        ((Button) a.getDialogPane().lookupButton(cancel)).setDefaultButton(true);
+        ((Button) a.getDialogPane().lookupButton(delete)).setDefaultButton(false);
+        return a.showAndWait().orElse(cancel) == delete;
     }
 
     static void refreshCompareList() {
-        if (INSTANCE != null) INSTANCE.compareModuleContainer.refresh();
+        if (INSTANCE != null) {
+            INSTANCE.compareModuleContainer.refresh();
+            INSTANCE.updateCounts();
+        }
     }
 
     private void handleBack(ActionEvent e) {
@@ -133,6 +207,9 @@ public class settingsController {
 
     private void handleSave(ActionEvent e) {
         saveHandler.saveData(true);
+        saveStatus.setText("Gespeichert um "
+            + java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"))
+            + " · Backup angelegt");
 
         StringBuilder sb = new StringBuilder();
 
@@ -159,25 +236,6 @@ public class settingsController {
                 .append("\n");
         }
     }
-    private void handleAdd(ActionEvent e) {
-        int idx = moduleTabPane.getSelectionModel().getSelectedIndex();
-        if (idx == 2) {
-            Category neu = new Category("");
-            AppManager.addCategory(neu);
-            categoryContainer.refresh();
-        } else {
-            boolean isMain = (idx == 0);
-            ModuleItem newItem = new ModuleItem(isMain, Semester.WINTER, "", 0, "");
-            if (isMain) {
-                AppManager.addHhnModule(newItem);
-                hhnModuleContainer.refresh();
-            } else {
-                AppManager.addCompareModule(newItem);
-                compareModuleContainer.refresh();
-            }
-        }
-    }
-
     private static class ModuleCell extends ListCell<ModuleItem> {
         private final boolean isHhn;
         private final ComboBox<Semester> semesterBox = new ComboBox<>();
@@ -185,8 +243,8 @@ public class settingsController {
         private final TextField nameField = new TextField();
         private final TextField ectsField = new TextField();
         private final CheckComboBox<ModuleItem> checkCombo;
-        private final Button removeBtn = new Button("X");
-        private final HBox container;
+        private final Button removeBtn = new Button("✕");
+        private final VBox container;
         private final ObservableList<ModuleItem> otherList;
         private boolean updating = false;
         private final ComboBox<Category> categoryBox = new ComboBox<>();
@@ -293,24 +351,62 @@ public class settingsController {
                     checkCombo.setPrefWidth(Region.USE_COMPUTED_SIZE);
                     checkCombo.requestLayout();
                 });
-                container = new HBox(5, semesterBox, numberField, nameField, ectsField, checkCombo, removeBtn);
+                checkCombo.setMaxWidth(Double.MAX_VALUE);
+                checkCombo.setPrefWidth(120);
+                checkCombo.setTooltip(new Tooltip("HHN-Module auswählen, die dieses VGU-Modul ersetzt"));
+                HBox.setHgrow(checkCombo, Priority.ALWAYS);
+                Label arrow = new Label("→");
+                arrow.getStyleClass().add("arrow");
+                checkCombo.getCheckModel().getCheckedItems().addListener((ListChangeListener<ModuleItem>) ch -> updateMappedStyle());
+                container = new VBox(6,
+                    row(numberField, nameField, removeBtn),
+                    row(semesterBox, ectsField, arrow, checkCombo));
             } else {
                 checkCombo = null;
-                container = new HBox(5, semesterBox, numberField, nameField, ectsField, categoryBox, removeBtn);
+                categoryBox.setPromptText("Kategorie");
+                categoryBox.setMaxWidth(Double.MAX_VALUE);
+                HBox.setHgrow(categoryBox, Priority.ALWAYS);
+                container = new VBox(6,
+                    row(numberField, nameField, removeBtn),
+                    row(semesterBox, ectsField, categoryBox));
             }
+            container.getStyleClass().add("card");
+            // Zellen an die Listenbreite anpassen statt horizontal zu scrollen
+            setPrefWidth(0);
 
             removeBtn.setFocusTraversable(false);
-            removeBtn.setStyle("-fx-padding:2 5; -fx-font-weight:bold;");
+            removeBtn.getStyleClass().add("delete-button");
+            removeBtn.setTooltip(new Tooltip("Modul löschen"));
             removeBtn.setOnAction(e -> {
                 ModuleItem it = getItem();
-                if (it != null) {
+                if (it != null && confirmDelete(isHhn ? "HHN-Modul" : "VGU-Modul", it.getModulName())) {
                     if (isHhn) AppManager.removeHhnModule(it);
                     else AppManager.removeCompareModule(it);
                 }
             });
 
-            container.setFillHeight(true);
             HBox.setHgrow(nameField, Priority.ALWAYS);
+            semesterBox.setPrefWidth(120);
+            semesterBox.setConverter(new StringConverter<>() {
+                @Override public String toString(Semester s) {
+                    return s == null ? "" : (s == Semester.SUMMER ? "Sommer" : "Winter");
+                }
+                @Override public Semester fromString(String s) { return null; }
+            });
+        }
+
+        private static HBox row(javafx.scene.Node... nodes) {
+            HBox h = new HBox(6, nodes);
+            h.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+            return h;
+        }
+
+        private void updateMappedStyle() {
+            if (isHhn) return;
+            ModuleItem it = getItem();
+            container.getStyleClass().remove("unmapped");
+            if (it != null && it.getComparableNumber().isEmpty()) container.getStyleClass().add("unmapped");
+            if (!updating && INSTANCE != null) INSTANCE.updateCounts();
         }
 
         @Override
@@ -330,6 +426,7 @@ public class settingsController {
                     checkCombo.getCheckModel().clearChecks();
                     item.getComparableNumber().forEach(checkCombo.getCheckModel()::check);
                     updating = false;
+                    updateMappedStyle();
                 }
                 setGraphic(container);
             }
