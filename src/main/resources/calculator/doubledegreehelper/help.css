@@ -33,7 +33,7 @@
 }
 .help-log {
     -fx-font-family: "Consolas", "Menlo", monospace;
-    -fx-font-size: 12px;
+    -fx-font-size: 13px;
     -fx-control-inner-background: #fef2f2;
     -fx-text-fill: #7f1d1d;
 }

@@ -425,14 +425,20 @@ public class homeController {
             }
             sb.append('.');
         }
+        StringBuilder tip = new StringBuilder();
         if (!r.errors.isEmpty()) {
             sb.append(' ').append(r.errors.size())
               .append(r.errors.size() == 1 ? " Datei übersprungen." : " Dateien übersprungen.");
-            statusLabel.setTooltip(new Tooltip(String.join("\n", r.errors)));
+            tip.append("Übersprungen:\n").append(String.join("\n", r.errors));
             HelpLog.addAll("Übersprungen: ", r.errors);
-        } else {
-            statusLabel.setTooltip(null);
         }
+        if (!r.ignored.isEmpty()) {
+            sb.append(' ').append(r.ignored.size())
+              .append(r.ignored.size() == 1 ? " andere PDF ignoriert." : " andere PDFs ignoriert.");
+            if (tip.length() > 0) tip.append("\n\n");
+            tip.append("Kein Transkript (keine Student ID), ignoriert:\n").append(String.join("\n", r.ignored));
+        }
+        statusLabel.setTooltip(tip.length() == 0 ? null : new Tooltip(tip.toString()));
         statusLabel.setText(sb.toString());
     }
 

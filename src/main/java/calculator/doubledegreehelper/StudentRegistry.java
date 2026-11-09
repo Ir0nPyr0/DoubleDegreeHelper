@@ -286,7 +286,7 @@ public final class StudentRegistry {
         if (s.getNumber() > 0) {
           r.students.put(s.getNumber(), s.getFullName());
         } else {
-          r.error = p.getFileName() + ": keine Student ID gefunden";
+          r.notTranscript = true; // anderes Dokument, z. B. Gutachten oder Sprachnachweis
         }
       } else {
         r.students.putAll(ThemeReader.readStudents(p));
@@ -308,6 +308,10 @@ public final class StudentRegistry {
 
     for (Parsed f : ordered) {
       knownFiles.put(key(f.path), f.lastModified);
+      if (f.notTranscript) {
+        result.ignored.add(f.path.getFileName().toString());
+        continue;
+      }
       if (f.error != null) {
         result.errors.add(f.error);
         continue;
@@ -379,6 +383,8 @@ public final class StudentRegistry {
     public int added;
     public int updated;
     public final List<String> errors = new ArrayList<>();
+    /** PDFs ohne Matrikelnummer (Gutachten, IELTS, …): keine Fehler, nur zur Info. */
+    public final List<String> ignored = new ArrayList<>();
   }
 
   private static final class Parsed {
@@ -387,6 +393,7 @@ public final class StudentRegistry {
     boolean pdf;
     final Map<Integer, String> students = new LinkedHashMap<>();
     String error;
+    boolean notTranscript;
   }
 
   private static final class PendingXlsx implements Serializable {

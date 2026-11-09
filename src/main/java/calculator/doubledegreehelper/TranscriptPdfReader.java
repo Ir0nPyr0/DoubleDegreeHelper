@@ -116,7 +116,11 @@ public class TranscriptPdfReader {
       line = line.trim();
       if (line.startsWith("Student ID")) {
         String[] partsId = line.substring("Student ID".length()).trim().split("\\s+", 2);
-        studentId = Integer.parseInt(partsId[0]);
+        try {
+          studentId = Integer.parseInt(partsId[0].replaceAll("[^0-9]", ""));
+        } catch (NumberFormatException ex) {
+          studentId = 0; // keine Matrikelnummer, z. B. bei anderen PDFs
+        }
         break;
       }
     }
@@ -124,8 +128,12 @@ public class TranscriptPdfReader {
     for (String line : lines) {
       line = line.trim();
       if (line.startsWith("Grade Point Average")) {
-        String g = line.substring(line.indexOf(':') + 1).trim();
-        totalGrade = Math.round(Float.parseFloat(g) * 10);
+        String g = line.substring(line.indexOf(':') + 1).trim().replace(',', '.');
+        try {
+          totalGrade = Math.round(Float.parseFloat(g) * 10);
+        } catch (NumberFormatException ex) {
+          logger.warn("Notendurchschnitt nicht lesbar: {}", g);
+        }
         break;
       }
     }
@@ -207,7 +215,7 @@ public class TranscriptPdfReader {
     logger.info("=== Student aus PDF geladen ===");
     logger.info("Name (voll):    {}", firstname);
     logger.info("Student ID:     " + studentId);
-    logger.info("Geboren:        {} in {}", df.format(bornDate), bornIn);
+    logger.info("Geboren:        {} in {}", bornDate == null ? "?" : df.format(bornDate), bornIn);
     logger.info("GPA:            {}", String.format("%.2f", totalGrade / 10.0));
     logger.info("Module gesamt:  " + studentModule.size());
   }
