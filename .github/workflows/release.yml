@@ -74,6 +74,14 @@ jobs:
         shell: pwsh
         run: .\gradlew.bat jpackage "-PappVersion=${{ steps.ver.outputs.version }}" --no-daemon
 
+      - name: Prüfen, dass HTTPS-Module im Image sind
+        shell: bash
+        run: |
+          JAVA="$(find build/image -path '*bin/java.exe' | head -n 1)"
+          "$JAVA" --list-modules | tee modules.txt
+          grep -q '^jdk.crypto.ec' modules.txt || { echo "::error::jdk.crypto.ec fehlt im Image (Update-Check scheitert dann mit handshake_failure)"; exit 1; }
+          grep -q '^java.net.http' modules.txt || { echo "::error::java.net.http fehlt im Image"; exit 1; }
+
       - name: Installer umbenennen
         id: exe
         shell: bash
