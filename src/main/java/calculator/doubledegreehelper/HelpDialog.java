@@ -37,9 +37,10 @@ public final class HelpDialog {
           "Maus über den Statustext unter „Studenten aktualisieren“ halten: dort steht, welche Datei warum übersprungen wurde.",
           "Ist die Datei gerade in Excel oder einem PDF-Programm geöffnet? Schließen und erneut hineinziehen.",
           "Die Einzelmeldungen findest du auch oben in diesem Fenster unter „Letzte Fehlermeldungen“."),
-      new Problem("„keine Student ID gefunden“ (PDF)",
-          "In der PDF wurde keine Matrikelnummer erkannt.",
-          "Prüfen, ob es wirklich das Transkript der VGU ist (nicht Urkunde o. Ä.).",
+      new Problem("„… andere PDFs ignoriert“ / Transkript taucht nicht auf",
+          "In diesen PDFs wurde keine Student ID gefunden. Gutachten, IELTS-Nachweise o. Ä. werden deshalb bewusst ignoriert, das ist kein Fehler.",
+          "Maus über den Statustext halten: dort stehen die ignorierten Dateien.",
+          "Ist ein echtes Transkript dabei? Dann prüfen, ob es das Transkript der VGU ist (nicht Urkunde o. Ä.).",
           "Eingescannte PDFs (nur Bild, kein markierbarer Text) können nicht gelesen werden. Bitte die digitale Original-PDF verwenden."),
       new Problem("„keine VGU ID gefunden“ / „Spalte 'VGU ID' nicht gefunden“ (XLSX)",
           "Die Excel-Datei hat keine Spalte mit der Überschrift „VGU ID“ oder sie ist leer.",
@@ -150,7 +151,8 @@ public final class HelpDialog {
     root.setBottom(footer);
     root.getStyleClass().add("help-root");
 
-    Scene scene = new Scene(root, 660, 640);
+    javafx.geometry.Rectangle2D screen = javafx.stage.Screen.getPrimary().getVisualBounds();
+    Scene scene = new Scene(root, Math.min(820, screen.getWidth() - 40), Math.min(820, screen.getHeight() - 40));
     var css = HelpDialog.class.getResource("/calculator/doubledegreehelper/help.css");
     if (css != null) scene.getStylesheets().add(css.toExternalForm());
     scene.setOnKeyPressed(e -> { if (e.getCode() == KeyCode.F1) stage.close(); });
@@ -171,10 +173,11 @@ public final class HelpDialog {
       box.getChildren().add(none);
       return box;
     }
-    TextArea area = new TextArea(String.join("\n", recent));
+    TextArea area = new TextArea(String.join("\n\n", recent));
     area.setEditable(false);
     area.setWrapText(true);
-    area.setPrefRowCount(Math.min(6, recent.size() + 1));
+    area.setPrefRowCount(Math.max(6, Math.min(16, recent.size() * 3)));
+    area.setMinHeight(160);
     area.getStyleClass().add("help-log");
     Button copy = new Button("Meldungen kopieren");
     copy.setOnAction(e -> {
