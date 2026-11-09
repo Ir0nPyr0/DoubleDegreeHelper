@@ -41,7 +41,7 @@
       <VBox alignment="TOP_CENTER" spacing="16.0">
          <padding><Insets top="16.0" right="16.0" bottom="16.0" left="16.0" /></padding>
          <children>
-            <ImageView fitHeight="110.0" fitWidth="200.0" pickOnBounds="true" preserveRatio="true">
+            <ImageView fitHeight="170.0" fitWidth="320.0" pickOnBounds="true" preserveRatio="true">
                <image>
                   <Image url="@../logo.png" />
                </image>
@@ -51,8 +51,8 @@
                   <VBox alignment="CENTER" spacing="10.0" mouseTransparent="true">
                      <children>
                         <Label text="⇩" styleClass="drop-icon" />
-                        <Label fx:id="dropTitle" text="PDF- und XLSX-Dateien hierher ziehen" styleClass="drop-title" wrapText="true" textAlignment="CENTER" />
-                        <Label text="Mehrere Dateien auf einmal möglich. Zuordnung über die Matrikelnummer." styleClass="muted" wrapText="true" textAlignment="CENTER" />
+                        <Label fx:id="dropTitle" text="PDF- und XLSX-Dateien hierher ziehen oder klicken" styleClass="drop-title" wrapText="true" textAlignment="CENTER" />
+                        <Label text="Mehrere Dateien auf einmal möglich. Per Klick öffnet sich die Dateiauswahl. Zuordnung über die Matrikelnummer." styleClass="muted" wrapText="true" textAlignment="CENTER" />
                      </children>
                   </VBox>
                </children>
@@ -64,7 +64,7 @@
    <!-- Rechts oben: Ordner + Aktualisieren -->
    <right>
       <VBox spacing="8.0" prefWidth="310.0" minWidth="260.0" styleClass="side-panel, right">
-         <padding><Insets top="16.0" right="16.0" bottom="16.0" left="16.0" /></padding>
+         <padding><Insets top="16.0" right="16.0" bottom="22.0" left="16.0" /></padding>
          <children>
             <Label text="Quellordner" styleClass="section-title" />
             <Button fx:id="pdfFolderButton" maxWidth="Infinity" mnemonicParsing="false" text="PDF-Ordner festlegen" />
@@ -106,19 +106,17 @@
             <Button fx:id="transcriptEditButton" maxWidth="Infinity" mnemonicParsing="false" text="Zeugnis bearbeiten" />
             <Button fx:id="diplomaEditButton" maxWidth="Infinity" mnemonicParsing="false" text="Diploma bearbeiten" />
             <Button fx:id="certificateEditButton" maxWidth="Infinity" mnemonicParsing="false" text="Zertifikat bearbeiten" />
+            <Region VBox.vgrow="ALWAYS" minHeight="8.0" />
+            <!-- Hilfe mittig, Version unten rechts -->
+            <StackPane>
+               <VBox.margin><Insets bottom="2.0" /></VBox.margin>
+               <children>
+                  <Button fx:id="helpButton" mnemonicParsing="false" text="Hilfe" styleClass="help-button" StackPane.alignment="CENTER" />
+                  <Label fx:id="versionLabel" styleClass="version-label" StackPane.alignment="BOTTOM_RIGHT" />
+               </children>
+            </StackPane>
          </children>
       </VBox>
    </right>
 
-   <!-- Unten: Hilfe links, Version rechts -->
-   <bottom>
-      <HBox alignment="CENTER_LEFT">
-         <padding><Insets top="4.0" right="12.0" bottom="6.0" left="12.0" /></padding>
-         <children>
-            <Button fx:id="helpButton" mnemonicParsing="false" text="Hilfe" styleClass="help-button" />
-            <Region HBox.hgrow="ALWAYS" />
-            <Label fx:id="versionLabel" styleClass="version-label" />
-         </children>
-      </HBox>
-   </bottom>
 </BorderPane>

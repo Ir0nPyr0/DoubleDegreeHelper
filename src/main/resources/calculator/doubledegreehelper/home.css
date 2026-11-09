@@ -146,3 +146,12 @@
 .student-list .list-cell:filled:selected .delete-button:hover {
     -fx-text-fill: #b91c1c;
 }
+
+/* Drop-Feld ist auch klickbar (Dateiauswahl) */
+.drop-zone {
+    -fx-cursor: hand;
+}
+.drop-zone:hover {
+    -fx-border-color: -accent;
+    -fx-background-color: #f1f5ff;
+}
