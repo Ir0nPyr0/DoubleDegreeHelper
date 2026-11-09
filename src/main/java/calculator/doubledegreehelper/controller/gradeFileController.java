@@ -15,9 +15,11 @@ import javafx.stage.Window;
 
 import java.io.File;
 import java.nio.file.Paths;
+import java.util.prefs.Preferences;
 
 public class gradeFileController {
     @FXML private Button backButton, continueButton, fileChooserButton;
+    private final Preferences prefs = Preferences.userNodeForPackage(gradeFileController.class);
 
     @FXML
     public void initialize() {
@@ -31,9 +33,12 @@ public class gradeFileController {
         FileChooser chooser = new FileChooser();
         chooser.setTitle("Transkript-PDF wählen");
         chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PDF Files (*.pdf)", "*.pdf"));
+        File lastDir = new File(prefs.get("lastPdfDir", ""));
+        if (lastDir.isDirectory()) chooser.setInitialDirectory(lastDir);
         Window w = ((Node) ev.getSource()).getScene().getWindow();
         File file = chooser.showOpenDialog(w);
         if (file != null) {
+            if (file.getParentFile() != null) prefs.put("lastPdfDir", file.getParentFile().getAbsolutePath());
             try {
                 Student s = TranscriptPdfReader.read(file.toPath());
                 AppManager.setStudent(s);

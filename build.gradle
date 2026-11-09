@@ -8,7 +8,7 @@ plugins {
 }
 
 group   = 'Calculator'
-version = '1.0.6'
+version = '1.0.7'
 
 repositories { mavenCentral() }
 
@@ -26,6 +26,13 @@ ext {
 }
 
 tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
+
+processResources {
+  inputs.property('version', project.version)
+  filesMatching('**/version.properties') {
+    expand(version: project.version)
+  }
+}
 
 application {
   mainClass = 'calculator.doubledegreehelper.App'

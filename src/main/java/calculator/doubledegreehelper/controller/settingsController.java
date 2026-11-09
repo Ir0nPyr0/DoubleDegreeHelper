@@ -132,7 +132,7 @@ public class settingsController {
     }
 
     private void handleSave(ActionEvent e) {
-        saveHandler.saveData();
+        saveHandler.saveData(true);
 
         StringBuilder sb = new StringBuilder();
 

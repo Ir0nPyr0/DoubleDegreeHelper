@@ -19,10 +19,14 @@ import java.util.regex.Pattern;
 
 public class TranscriptPdfReader {
   private static final Logger logger = LoggerFactory.getLogger(TranscriptPdfReader.class);
+  // Jahr optional: bei langen Semesternamen bricht die PDF das Jahr in die nächste Zeile um
   private static final Pattern MODULE_P = Pattern.compile(
       "^(.+?)\\s+(Winter|Summer|WiSe|SoSe)\\s+" +
-          "(\\d{4})\\s+([0-9]+(?:\\.[0-9])?)\\s+([0-9]+(?:\\.[0-9])?)$"
+          "(?:(\\d{4})\\s+)?([0-9]+(?:\\.[0-9]+)?)\\s+([0-9]+(?:\\.[0-9]+)?)$"
   );
+  private static final Pattern WRAPPED_YEAR_P = Pattern.compile("^(.*?)\\s*\\b(\\d{4})$");
+  private static final Pattern BIRTH_DATE_P = Pattern.compile("Date of Birth\\s+(\\d{2}\\.\\d{2}\\.\\d{4})");
+  private static final Pattern BIRTH_PLACE_P = Pattern.compile("Place of Birth\\s+(.+)$");
   private static final Pattern NAME_P = Pattern.compile("^Name[:]?\\s*(.+)$", Pattern.CASE_INSENSITIVE);
 
   public static Student read(Path pdfPath) throws IOException, ParseException {
@@ -91,18 +95,19 @@ public class TranscriptPdfReader {
 
     String fullOriginalName = fullName.trim();
 
+    // "Date of Birth" und "Place of Birth" können auf einer Zeile stehen
     for (String line : lines) {
-      line = line.trim();
-      if (line.startsWith("Date of Birth")) {
-        bornDate = df.parse(line.substring("Date of Birth".length()).trim());
+      Matcher m = BIRTH_DATE_P.matcher(line);
+      if (m.find()) {
+        bornDate = df.parse(m.group(1));
         break;
       }
     }
 
     for (String line : lines) {
-      line = line.trim();
-      if (line.startsWith("Place of Birth")) {
-        bornIn = line.substring("Place of Birth".length()).trim();
+      Matcher m = BIRTH_PLACE_P.matcher(line);
+      if (m.find()) {
+        bornIn = m.group(1).trim();
         break;
       }
     }
@@ -141,7 +146,7 @@ public class TranscriptPdfReader {
       String line = raw.trim();
       if (line.isEmpty()) continue;
 
-      if (!inModules && line.startsWith("Course") && line.contains("Grade")) {
+      if (!inModules && (line.startsWith("Course") || line.startsWith("Module")) && line.contains("Grade")) {
         inModules = true;
         continue;
       }
@@ -150,17 +155,26 @@ public class TranscriptPdfReader {
 
         Matcher m = MODULE_P.matcher(line);
         if (m.matches()) {
-          String course = m.group(1).trim();
+          String course = m.group(1).replaceAll("\\s*\\*$", "").trim();
           String semStr = m.group(2);
           Semester sem = (semStr.equalsIgnoreCase("Summer") || semStr.equalsIgnoreCase("SoSe"))
               ? Semester.SUMMER
               : Semester.WINTER;
-          int year  = Integer.parseInt(m.group(3));
+          int year  = m.group(3) == null ? 0 : Integer.parseInt(m.group(3));
           int ects  = (int) Float.parseFloat(m.group(4));
           float grd = Float.parseFloat(m.group(5));
 
           lastModule = new StudentModule(course, sem, year, ects, grd, null);
           modules.add(lastModule);
+          continue;
+        }
+
+        Matcher wy = WRAPPED_YEAR_P.matcher(line);
+        if (lastModule != null && lastModule.getYear() == 0 && wy.matches()) {
+          lastModule.setYear(Integer.parseInt(wy.group(2)));
+          if (!wy.group(1).isBlank()) {
+            lastModule.setName(lastModule.getName() + " " + wy.group(1).trim());
+          }
         } else if (lastModule != null) {
           if (line.matches("^[A-Za-zÄÖÜäöüß].*")
               && !line.contains("Page")

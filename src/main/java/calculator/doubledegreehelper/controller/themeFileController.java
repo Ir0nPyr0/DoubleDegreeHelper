@@ -16,9 +16,11 @@ import javafx.stage.Window;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.prefs.Preferences;
 
 public class themeFileController {
     @FXML private Button backButton, continueButton, fileChooserButton;
+    private final Preferences prefs = Preferences.userNodeForPackage(themeFileController.class);
 
     @FXML
     public void initialize() {
@@ -34,8 +36,11 @@ public class themeFileController {
         chooser.getExtensionFilters().add(
             new FileChooser.ExtensionFilter("Excel Files (*.xlsx)", "*.xlsx")
         );
+        File lastDir = new File(prefs.get("lastXlsxDir", ""));
         String gradePath = AppManager.getFilePath();
-        if (gradePath != null) {
+        if (lastDir.isDirectory()) {
+            chooser.setInitialDirectory(lastDir);
+        } else if (gradePath != null) {
             java.io.File initDir = new java.io.File(gradePath).getParentFile();
             if (initDir != null && initDir.exists()) {
                 chooser.setInitialDirectory(initDir);
@@ -44,6 +49,7 @@ public class themeFileController {
         Window w = ((Node) ev.getSource()).getScene().getWindow();
         File file = chooser.showOpenDialog(w);
         if (file != null) {
+            if (file.getParentFile() != null) prefs.put("lastXlsxDir", file.getParentFile().getAbsolutePath());
             try {
                 ThemeReader.fillThemeAndGenderFromExcel(file.toPath(), AppManager.getStudent());
                 AppManager.setThemeFilePath(file.getAbsolutePath());

@@ -66,8 +66,15 @@ public class WordFileCreator {
 
   private static void replaceInParagraphs(List<XWPFParagraph> paras, Map<String,String> repl) {
     for (XWPFParagraph p : paras) {
+      // Runs nach jeder Ersetzung neu einlesen, da removeRun die Indizes verschiebt;
+      // sonst bleiben weitere Platzhalter im selben Absatz stehen (z.B. {MIDDLENAME})
+      for (int guard = 0; guard < 100 && replaceFirstPlaceholder(p, repl); guard++) { }
+    }
+  }
+
+  private static boolean replaceFirstPlaceholder(XWPFParagraph p, Map<String,String> repl) {
       List<XWPFRun> runs = p.getRuns();
-      if (runs.isEmpty()) continue;
+      if (runs.isEmpty()) return false;
 
       StringBuilder fullText = new StringBuilder();
       int[] runLens = new int[runs.size()];
@@ -81,7 +88,7 @@ public class WordFileCreator {
 
       for (Map.Entry<String,String> entry : repl.entrySet()) {
         String placeholder = entry.getKey();
-        String replacement = entry.getValue();
+        String replacement = Objects.toString(entry.getValue(), "");
 
         int idx = paragraphText.indexOf(placeholder);
         if (idx < 0) continue;
@@ -125,13 +132,9 @@ public class WordFileCreator {
         for (int i = endRun; i > startRun; i--) {
           p.removeRun(i);
         }
-
-        paragraphText = paragraphText.substring(0, idx)
-            + replacement
-            + paragraphText.substring(endIdx);
-        runLens[startRun] = (before + replacement + after).length();
+        return true;
       }
-    }
+      return false;
   }
 
   private static Path findTemplatePath(String baseName) {
@@ -261,13 +264,14 @@ public class WordFileCreator {
     else if (g <= 4.0) desc = "sufficient";
     else               desc = "non sufficient";
 
-    double g1d = Math.floor(g * 10.0)  / 10.0;
-    double g2d = Math.floor(g * 100.0) / 100.0;
+    // Truncate to one decimal place (German grading convention: no rounding).
+    // The small epsilon guards against floating point artefacts like 2.2999999 for 2.3.
+    double g1d = Math.floor(g * 10.0 + 1e-9) / 10.0;
 
     if (mode) {
       return String.format(Locale.US, "%s (%.1f)", desc, g1d);
     } else {
-      return String.format(Locale.US, "%.2f (%s)", g2d, desc);
+      return String.format(Locale.US, "%.1f (%s)", g1d, desc);
     }
   }
 
