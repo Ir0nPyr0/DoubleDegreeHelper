@@ -135,6 +135,8 @@ public final class HelpDialog {
     // Fußleiste
     Button dataButton = new Button("Datenordner öffnen");
     dataButton.setOnAction(e -> openDataFolder());
+    Button updateButton = new Button("Nach Updates suchen");
+    updateButton.setOnAction(e -> UpdateChecker.checkManually(stage, updateButton));
     Button closeButton = new Button("Schließen");
     closeButton.setCancelButton(true);
     closeButton.setOnAction(e -> stage.close());
@@ -142,7 +144,7 @@ public final class HelpDialog {
     version.getStyleClass().add("help-muted");
     Region spacer = new Region();
     HBox.setHgrow(spacer, Priority.ALWAYS);
-    HBox footer = new HBox(8, version, spacer, dataButton, closeButton);
+    HBox footer = new HBox(8, version, spacer, updateButton, dataButton, closeButton);
     footer.setAlignment(Pos.CENTER_LEFT);
     footer.setPadding(new Insets(10, 16, 12, 16));
     footer.getStyleClass().add("help-footer");
