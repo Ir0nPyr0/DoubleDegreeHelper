@@ -16,6 +16,7 @@ public class App extends Application {
     public void start(Stage stage) {
         boolean loaded = saveHandler.loadData();
         StudentRegistry.load();
+        AppIcons.installGlobally(stage);
         SceneManager.init(stage);
         SceneManager.switchTo(SceneManager.View.HOME);
         if (!loaded) {

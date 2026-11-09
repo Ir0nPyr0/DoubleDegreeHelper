@@ -8,7 +8,7 @@ plugins {
 }
 
 group   = 'Calculator'
-version = findProperty('appVersion') ?: '1.1.2'
+version = findProperty('appVersion') ?: '1.1.3'
 
 repositories { mavenCentral() }
 
