@@ -27,6 +27,13 @@ ext {
 
 tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
 
+processResources {
+  inputs.property('version', project.version)
+  filesMatching('**/version.properties') {
+    expand(version: project.version)
+  }
+}
+
 application {
   mainClass = 'calculator.doubledegreehelper.App'
   mainModule = 'calculator.doubledegreehelper'

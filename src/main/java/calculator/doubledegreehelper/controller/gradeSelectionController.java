@@ -3,6 +3,7 @@ package calculator.doubledegreehelper.controller;
 import calculator.doubledegreehelper.AppManager;
 import calculator.doubledegreehelper.SceneManager;
 import calculator.doubledegreehelper.SelectorAlgorithm;
+import calculator.doubledegreehelper.StudentRegistry;
 import calculator.doubledegreehelper.WordFileCreator;
 import calculator.doubledegreehelper.module.ModuleItem;
 import calculator.doubledegreehelper.module.Semester;
@@ -342,6 +343,7 @@ public class gradeSelectionController {
 
         try {
             WordFileCreator.createWord(Path.of(out), AppManager.getStudent(), activeModule);
+            StudentRegistry.markExported(AppManager.getStudent());
             new Alert(
                 Alert.AlertType.INFORMATION,
                 "Die Word-Dateien wurden erfolgreich erstellt:\n" + out

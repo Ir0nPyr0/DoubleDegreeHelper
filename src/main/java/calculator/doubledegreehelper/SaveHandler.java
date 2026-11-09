@@ -10,8 +10,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.StandardCopyOption;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Stream;
 
 public class SaveHandler {
   private static final Logger logger = LoggerFactory.getLogger(SaveHandler.class);
@@ -27,6 +31,14 @@ public class SaveHandler {
   }
 
   public void saveData() {
+    saveData(false);
+  }
+
+  /**
+   * Speichert die Module. Mit {@code createBackup} wird die bisherige modules.dat
+   * vorher nach DoubleDegreeHelperData/backups kopiert (die neuesten MAX_BACKUPS bleiben).
+   */
+  public void saveData(boolean createBackup) {
     if (saveBlocked) {
       logger.error("Speichern gesperrt: '{}' konnte nicht geladen werden. Die Datei bleibt erhalten.", DATA_FILE);
       return;
@@ -36,6 +48,10 @@ public class SaveHandler {
     } catch (IOException io) {
       logger.error("Kann Datenverzeichnis '{}' nicht anlegen: {}", DATA_DIR, io.toString());
       return;
+    }
+
+    if (createBackup) {
+      backupDataFile();
     }
 
     List<ModuleItem> hhnCopy = new ArrayList<>(AppManager.getHhnModules());
@@ -105,6 +121,41 @@ public class SaveHandler {
     logger.info("Daten geladen aus {} ({} HHN, {} CMP, {} Kategorien)",
         DATA_FILE, hhnList.size(), cmpList.size(), catList.size());
     return true;
+  }
+
+  private static final int MAX_BACKUPS = 30;
+  private static final DateTimeFormatter BACKUP_STAMP = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss");
+
+  private static void backupDataFile() {
+    if (!Files.exists(DATA_FILE)) return;
+    Path backupDir = DATA_DIR.resolve("backups");
+    try {
+      Files.createDirectories(backupDir);
+      Path target = backupDir.resolve("modules-" + LocalDateTime.now().format(BACKUP_STAMP) + ".dat");
+      Files.copy(DATA_FILE, target, StandardCopyOption.REPLACE_EXISTING);
+      logger.info("Backup der Module erstellt: {}", target);
+
+      List<Path> backups;
+      try (Stream<Path> files = Files.list(backupDir)) {
+        backups = files
+            .filter(f -> f.getFileName().toString().matches("modules-\\d{8}-\\d{6}\\.dat"))
+            .sorted(Comparator.comparing((Path f) -> f.getFileName().toString()).reversed())
+            .toList();
+      }
+      for (int i = MAX_BACKUPS; i < backups.size(); i++) {
+        Files.deleteIfExists(backups.get(i));
+      }
+    } catch (IOException e) {
+      logger.error("Backup der Module fehlgeschlagen: {}", e.toString(), e);
+    }
+  }
+
+  public static Path getBackupDir() {
+    return DATA_DIR.resolve("backups");
+  }
+
+  public static Path getDataDir() {
+    return DATA_DIR;
   }
 
   public static Path getDataFile() {

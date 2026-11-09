@@ -160,4 +160,65 @@ public class ThemeReader {
       }
     }
   }
+
+  /**
+   * Liest alle Studierenden (VGU ID und vietnamesischer Name) aus einer Theme-XLSX.
+   * Eine Datei kann einen oder mehrere Studierende enthalten.
+   */
+  public static Map<Integer, String> readStudents(Path excelPath) throws IOException {
+    Map<Integer, String> result = new java.util.LinkedHashMap<>();
+    try (FileInputStream fis = new FileInputStream(excelPath.toFile());
+         Workbook wb = new XSSFWorkbook(fis))
+    {
+      Sheet sheet = wb.getSheetAt(0);
+      Row header = sheet.getRow(0);
+      if (header == null) return result;
+
+      Integer idxVguId = null;
+      Integer idxName = null;
+      for (Cell c : header) {
+        if (c.getCellType() != CellType.STRING) continue;
+        String key = c.getStringCellValue().replace("\n", " ").trim().toLowerCase(java.util.Locale.ROOT);
+        if (key.equals("vgu id")) idxVguId = c.getColumnIndex();
+        else if (idxName == null && key.contains("full name") && key.contains("vietnamese")) idxName = c.getColumnIndex();
+      }
+      if (idxVguId == null) {
+        throw new IOException("Spalte 'VGU ID' nicht gefunden");
+      }
+
+      for (int r = 1; r <= sheet.getLastRowNum(); r++) {
+        Row row = sheet.getRow(r);
+        if (row == null) continue;
+        Cell idCell = row.getCell(idxVguId);
+        if (idCell == null) continue;
+        int vguId;
+        try {
+          vguId = idCell.getCellType() == CellType.NUMERIC
+              ? (int) idCell.getNumericCellValue()
+              : Integer.parseInt(idCell.getStringCellValue().trim());
+        } catch (IllegalStateException | NumberFormatException e) {
+          continue;
+        }
+        if (vguId <= 0) continue;
+
+        String name = "";
+        if (idxName != null) {
+          Cell nameCell = row.getCell(idxName);
+          if (nameCell != null && nameCell.getCellType() == CellType.STRING) {
+            name = capitalise(nameCell.getStringCellValue().trim());
+          }
+        }
+        result.put(vguId, name);
+      }
+    }
+    return result;
+  }
+
+  static String capitalise(String rawName) {
+    return java.util.Arrays.stream(rawName.split("\\s+"))
+        .filter(part -> !part.isEmpty())
+        .map(part -> part.substring(0,1).toUpperCase(java.util.Locale.ROOT) +
+            part.substring(1).toLowerCase(java.util.Locale.ROOT))
+        .collect(java.util.stream.Collectors.joining(" "));
+  }
 }

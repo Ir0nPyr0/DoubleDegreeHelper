@@ -15,6 +15,7 @@ public class App extends Application {
     @Override
     public void start(Stage stage) {
         boolean loaded = saveHandler.loadData();
+        StudentRegistry.load();
         SceneManager.init(stage);
         SceneManager.switchTo(SceneManager.View.HOME);
         if (!loaded) {
@@ -33,5 +34,6 @@ public class App extends Application {
     public void stop() throws Exception {
         super.stop();
         saveHandler.saveData();
+        StudentRegistry.save();
     }
 }
