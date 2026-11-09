@@ -91,6 +91,45 @@ public final class OnboardingTour {
     return running != null;
   }
 
+  // ------------------------------------------------------------------ Tour nach Szenenwechsel
+
+  /** Welche Tour nach dem nächsten Szenenwechsel starten soll (z. B. aus dem Hilfe-Fenster heraus). */
+  private static String pendingTour;
+
+  public static void requestAfterSwitch(String tourId) {
+    pendingTour = tourId;
+  }
+
+  /** true, wenn für diese Ansicht eine Tour angefordert wurde (wird dabei zurückgesetzt). */
+  public static boolean consumeRequest(String tourId) {
+    if (tourId.equals(pendingTour)) {
+      pendingTour = null;
+      return true;
+    }
+    return false;
+  }
+
+  /** Führt {@code action} einmal kurz aus, nachdem {@code root} in einer Szene angezeigt wird. */
+  public static void runWhenShown(Node root, Runnable action) {
+    Runnable delayed = () -> {
+      javafx.animation.PauseTransition wait = new javafx.animation.PauseTransition(Duration.millis(450));
+      wait.setOnFinished(e -> { if (root.getScene() != null) action.run(); });
+      wait.play();
+    };
+    if (root.getScene() != null) {
+      delayed.run();
+      return;
+    }
+    root.sceneProperty().addListener(new javafx.beans.value.ChangeListener<>() {
+      @Override
+      public void changed(javafx.beans.value.ObservableValue<? extends Scene> obs, Scene old, Scene sc) {
+        if (sc == null) return;
+        obs.removeListener(this); // nur einmal
+        delayed.run();
+      }
+    });
+  }
+
   // ------------------------------------------------------------------ Aufbau
 
   private void buildUi() {

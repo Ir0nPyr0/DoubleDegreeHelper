@@ -89,9 +89,10 @@ public final class HelpDialog {
 
   /**
    * Zeigt das Hilfe-Fenster.
-   * @param startTour wird ausgeführt, wenn „Tour starten“ geklickt wird (Fenster ist dann schon zu)
+   * @param homeTour     startet die Tour durch das Hauptmenü (Fenster ist dann schon zu)
+   * @param settingsTour startet die Tour durch die Einstellungen
    */
-  public static void show(Window owner, Runnable startTour) {
+  public static void show(Window owner, Runnable homeTour, Runnable settingsTour) {
     Stage stage = new Stage();
     if (owner != null) stage.initOwner(owner);
     stage.initModality(Modality.WINDOW_MODAL);
@@ -104,18 +105,24 @@ public final class HelpDialog {
     // Einführung
     Label introTitle = new Label("Einführung");
     introTitle.getStyleClass().add("help-section-title");
-    Label introText = new Label("Die Tour hebt die wichtigsten Bedienelemente nacheinander hervor "
-        + "und erklärt, was sie tun. Dauer etwa eine Minute. Navigieren mit den Pfeiltasten, Esc beendet.");
+    Label introText = new Label("Die Touren heben die wichtigsten Bedienelemente nacheinander hervor "
+        + "und erklären, was sie tun. Je etwa eine Minute. Navigieren mit den Pfeiltasten, Esc beendet.");
     introText.setWrapText(true);
     introText.getStyleClass().add("help-muted");
-    Button tourButton = new Button("Tour starten");
+    Button tourButton = new Button("Tour: Hauptmenü");
     tourButton.getStyleClass().add("primary");
     tourButton.setDefaultButton(true);
     tourButton.setOnAction(e -> {
       stage.close();
-      if (startTour != null) javafx.application.Platform.runLater(startTour);
+      if (homeTour != null) javafx.application.Platform.runLater(homeTour);
     });
-    VBox intro = new VBox(8, introTitle, introText, tourButton);
+    Button settingsTourButton = new Button("Tour: Einstellungen");
+    settingsTourButton.setOnAction(e -> {
+      stage.close();
+      if (settingsTour != null) javafx.application.Platform.runLater(settingsTour);
+    });
+    HBox tourButtons = new HBox(8, tourButton, settingsTourButton);
+    VBox intro = new VBox(8, introTitle, introText, tourButtons);
     intro.getStyleClass().add("help-card");
 
     content.getChildren().addAll(intro, recentErrorsSection(), problemsSection());

@@ -6,6 +6,8 @@ import calculator.doubledegreehelper.module.ModuleItem;
 import calculator.doubledegreehelper.module.Semester;
 import calculator.doubledegreehelper.SaveHandler;
 import calculator.doubledegreehelper.SceneManager;
+import calculator.doubledegreehelper.HelpDialog;
+import calculator.doubledegreehelper.OnboardingTour;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -37,6 +39,12 @@ public class settingsController {
     private ListView<ModuleItem> hhnModuleContainer, compareModuleContainer;
     @FXML
     private ListView<Category> categoryContainer;
+    @FXML
+    private Button helpButton;
+    @FXML
+    private javafx.scene.layout.BorderPane root;
+
+    public static final String TOUR_ID = "settings";
 
     private final SaveHandler saveHandler = new SaveHandler();
     private static settingsController INSTANCE;
@@ -79,6 +87,7 @@ public class settingsController {
         categoryContainer.setItems(AppManager.getCategories());
         categoryContainer.setCellFactory(lv -> new CategoryCell());
 
+        setupHelp();
         backButton.setOnAction(this::handleBack);
         saveButton.setOnAction(this::handleSave);
         addVguButton.setOnAction(e -> {
@@ -145,6 +154,73 @@ public class settingsController {
             INSTANCE.compareModuleContainer.refresh();
             INSTANCE.updateCounts();
         }
+    }
+
+    // ------------------------------------------------------------------ Hilfe & Tour
+
+    private void setupHelp() {
+        Label icon = new Label("?");
+        icon.getStyleClass().add("help-icon");
+        helpButton.setGraphic(icon);
+        helpButton.setGraphicTextGap(6);
+        helpButton.setTooltip(new Tooltip("Hilfe, Fehlermeldungen und Einführung (F1)"));
+        helpButton.setOnAction(e -> openHelp());
+        root.addEventHandler(javafx.scene.input.KeyEvent.KEY_PRESSED, e -> {
+            if (e.getCode() == javafx.scene.input.KeyCode.F1 && !OnboardingTour.isRunning()) {
+                e.consume();
+                openHelp();
+            }
+        });
+        if (OnboardingTour.consumeRequest(TOUR_ID)) {
+            OnboardingTour.runWhenShown(root, this::startTour);
+        }
+    }
+
+    private void openHelp() {
+        HelpDialog.show(root.getScene() != null ? root.getScene().getWindow() : null, () -> {
+            OnboardingTour.requestAfterSwitch(homeController.TOUR_ID);
+            SceneManager.switchTo(SceneManager.View.HOME);
+        }, this::startTour);
+    }
+
+    private void startTour() {
+        List<OnboardingTour.Step> steps = List.of(
+            OnboardingTour.step("Einstellungen",
+                "Hier legst du fest, welches VGU-Modul als welches HHN-Modul angerechnet wird "
+                    + "und wie die HHN-Module im Zeugnis gruppiert werden.\n\n"
+                    + "Weiter mit „Weiter“ oder den Pfeiltasten, Esc beendet die Tour."),
+            OnboardingTour.step("VGU-Module",
+                "Alle Module, wie sie im VGU-Transkript stehen. Im Auswahlfeld rechts neben dem Pfeil → "
+                    + "hakst du die HHN-Module an, die dieses Modul ersetzt. Darunter erscheinen sie als Kasten.\n\n"
+                    + "Gelb markierte Karten sind noch keinem HHN-Modul zugeordnet. Diese landen bei der "
+                    + "Notenauswahl unter „Nicht zugeordnet“.",
+                compareModuleContainer.getParent()),
+            OnboardingTour.step("HHN-Module",
+                "Die Module, die im deutschen Zeugnis erscheinen. Für jedes wählst du die Kategorie. "
+                    + "„Angerechnet aus VGU“ zeigt, welche VGU-Module darauf zugeordnet sind.",
+                hhnModuleContainer.getParent()),
+            OnboardingTour.step("Suchen",
+                "Filtert die jeweilige Liste nach Modulnummer oder Name.",
+                vguSearch, hhnSearch),
+            OnboardingTour.step("Module hinzufügen",
+                "Legt ein neues, leeres Modul oben in der Liste an. Löschen geht mit ✕ auf der Karte.",
+                addVguButton, addHhnButton),
+            OnboardingTour.step("Kategorien",
+                "Die Abschnitte im Zeugnis. Die Reihenfolge änderst du per Drag and Drop am Griff ☰: "
+                    + "oben steht im Zeugnis zuerst. Mit „+ Neu“ legst du eine Kategorie an.",
+                categoryContainer.getParent()),
+            OnboardingTour.step("Speichern",
+                "Speichert alle Zuordnungen sofort und legt vorher automatisch ein Backup an. "
+                    + "Beim Schließen der App wird ebenfalls gespeichert.",
+                saveButton, saveStatus),
+            OnboardingTour.step("Zurück zur Startseite",
+                "Bringt dich zurück ins Hauptmenü mit der Studentenliste.",
+                backButton),
+            OnboardingTour.step("Hilfe",
+                "Fehlermeldungen, Lösungen für häufige Probleme und beide Touren findest du hier. Tastenkürzel: F1.",
+                helpButton)
+        );
+        OnboardingTour.start(root, steps, null);
     }
 
     private void handleBack(ActionEvent e) {

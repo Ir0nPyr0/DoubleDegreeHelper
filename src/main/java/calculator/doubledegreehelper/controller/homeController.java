@@ -14,7 +14,6 @@ import calculator.doubledegreehelper.student.Student;
 import calculator.doubledegreehelper.student.StudentRecord;
 import javafx.animation.FadeTransition;
 import javafx.animation.Interpolator;
-import javafx.animation.PauseTransition;
 import javafx.animation.ParallelTransition;
 import javafx.animation.TranslateTransition;
 import javafx.collections.ListChangeListener;
@@ -36,6 +35,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.stage.DirectoryChooser;
+import javafx.stage.FileChooser;
 import javafx.util.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,6 +71,7 @@ public class homeController {
     @FXML private Button helpButton;
 
     private static final String PREF_TOUR_DONE = "onboardingTourDone";
+    public static final String TOUR_ID = "home";
     private static boolean tourOfferedThisSession;
 
     private final Label placeholder = new Label();
@@ -434,9 +435,41 @@ public class homeController {
     // ------------------------------------------------------------------ Drag & Drop
 
     private void setupDragAndDrop() {
+        dropZone.setOnMouseClicked(e -> {
+            if (e.getButton() == MouseButton.PRIMARY) chooseFiles();
+        });
         root.setOnDragOver(this::handleDragOver);
         root.setOnDragExited(e -> setDropActive(false));
         root.setOnDragDropped(this::handleDragDropped);
+    }
+
+    private static final String DROP_TITLE = "PDF- und XLSX-Dateien hierher ziehen oder klicken";
+    private static final String PREF_LAST_PICK_DIR = "lastPickDir";
+
+    /** Klick auf das Feld: Dateien über den Explorer auswählen statt hineinziehen. */
+    private void chooseFiles() {
+        Preferences prefs = Preferences.userNodeForPackage(homeController.class);
+        FileChooser fc = new FileChooser();
+        fc.setTitle("PDF- und XLSX-Dateien auswählen");
+        fc.getExtensionFilters().addAll(
+            new FileChooser.ExtensionFilter("Transkripte und Themenlisten (*.pdf, *.xlsx)", "*.pdf", "*.PDF", "*.xlsx", "*.XLSX"),
+            new FileChooser.ExtensionFilter("PDF-Transkripte (*.pdf)", "*.pdf", "*.PDF"),
+            new FileChooser.ExtensionFilter("Excel-Themenlisten (*.xlsx)", "*.xlsx", "*.XLSX"));
+        for (String dir : new String[] { prefs.get(PREF_LAST_PICK_DIR, ""), StudentRegistry.getPdfFolder() }) {
+            if (dir != null && !dir.isBlank() && new File(dir).isDirectory()) {
+                fc.setInitialDirectory(new File(dir));
+                break;
+            }
+        }
+        List<File> picked = fc.showOpenMultipleDialog(root.getScene().getWindow());
+        if (picked == null || picked.isEmpty()) return;
+        File parent = picked.get(0).getParentFile();
+        if (parent != null) prefs.put(PREF_LAST_PICK_DIR, parent.getAbsolutePath());
+        List<File> files = picked.stream().filter(StudentRegistry::isSupported).toList();
+        if (files.isEmpty()) return;
+        statusLabel.setText(files.size() == 1 ? "Lese 1 Datei ein…" : "Lese " + files.size() + " Dateien ein…");
+        statusLabel.setTooltip(null);
+        StudentRegistry.ingestAsync(files, this::showResult);
     }
 
     private void handleDragOver(DragEvent e) {
@@ -468,7 +501,7 @@ public class homeController {
     private void setDropActive(boolean active) {
         dropZone.getStyleClass().remove("drop-active");
         if (active) dropZone.getStyleClass().add("drop-active");
-        dropTitle.setText(active ? "Loslassen zum Einlesen" : "PDF- und XLSX-Dateien hierher ziehen");
+        dropTitle.setText(active ? "Loslassen zum Einlesen" : DROP_TITLE);
     }
 
     // ------------------------------------------------------------------ Hilfe & Einführung
@@ -487,28 +520,21 @@ public class homeController {
             }
         });
 
-        // Beim allerersten Start die Tour automatisch zeigen
+        // Beim allerersten Start die Tour automatisch zeigen, oder wenn sie aus den Einstellungen angefordert wurde
         Preferences prefs = Preferences.userNodeForPackage(homeController.class);
-        if (!prefs.getBoolean(PREF_TOUR_DONE, false) && !tourOfferedThisSession) {
+        if (OnboardingTour.consumeRequest(TOUR_ID)) {
+            OnboardingTour.runWhenShown(root, this::startTour);
+        } else if (!prefs.getBoolean(PREF_TOUR_DONE, false) && !tourOfferedThisSession) {
             tourOfferedThisSession = true;
-            root.sceneProperty().addListener(new javafx.beans.value.ChangeListener<>() {
-                @Override
-                public void changed(javafx.beans.value.ObservableValue<? extends javafx.scene.Scene> obs,
-                                    javafx.scene.Scene old, javafx.scene.Scene scene) {
-                    if (scene == null) return;
-                    obs.removeListener(this); // nur einmal
-                    PauseTransition wait = new PauseTransition(Duration.millis(500));
-                    wait.setOnFinished(e -> {
-                        if (root.getScene() != null) startTour();
-                    });
-                    wait.play();
-                }
-            });
+            OnboardingTour.runWhenShown(root, this::startTour);
         }
     }
 
     private void openHelp() {
-        HelpDialog.show(root.getScene() != null ? root.getScene().getWindow() : null, this::startTour);
+        HelpDialog.show(root.getScene() != null ? root.getScene().getWindow() : null, this::startTour, () -> {
+            OnboardingTour.requestAfterSwitch(settingsController.TOUR_ID);
+            SceneManager.switchTo(SceneManager.View.SETTINGS);
+        });
     }
 
     private void startTour() {
@@ -519,9 +545,10 @@ public class homeController {
                 "Diese kurze Tour zeigt dir, wo du was findest. Das jeweils erklärte Element ist "
                     + "hervorgehoben, der Rest abgedunkelt.\n\n"
                     + "Weiter mit „Weiter“ oder den Pfeiltasten, Esc beendet die Tour. "
-                    + "Du kannst sie jederzeit über „Hilfe“ unten links erneut starten."),
+                    + "Du kannst sie jederzeit über „Hilfe“ unten rechts erneut starten."),
             OnboardingTour.step("Dateien einlesen",
                 "Zieh hier die PDF-Transkripte der VGU und die XLSX-Themenlisten hinein, auch mehrere auf einmal. "
+                    + "Oder klick in das Feld, um die Dateien im Explorer auszuwählen. "
                     + "PDF und XLSX werden automatisch über die Matrikelnummer (VGU ID) zusammengeführt. "
                     + "Eine XLSX darf mehrere Studenten enthalten.",
                 dropZone),
@@ -560,11 +587,14 @@ public class homeController {
                 transcriptEditButton, diplomaEditButton, certificateEditButton),
             OnboardingTour.step("Hilfe",
                 "Wenn etwas schiefgeht: Hier findest du die letzten Fehlermeldungen, Lösungen für häufige "
-                    + "Probleme und diese Tour. Tastenkürzel: F1.",
+                    + "Probleme und die Touren, auch eine durch die Einstellungen. Tastenkürzel: F1.",
                 helpButton)
         );
-        OnboardingTour.start(root, steps, () ->
-            Preferences.userNodeForPackage(homeController.class).putBoolean(PREF_TOUR_DONE, true));
+        OnboardingTour.start(root, steps, () -> {
+            Preferences p = Preferences.userNodeForPackage(homeController.class);
+            p.putBoolean(PREF_TOUR_DONE, true);
+            try { p.flush(); } catch (Exception ignored) { /* wird beim Beenden ohnehin geschrieben */ }
+        });
     }
 
     // ------------------------------------------------------------------ bisherige Aktionen
