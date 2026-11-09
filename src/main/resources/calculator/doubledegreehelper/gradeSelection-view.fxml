@@ -1,169 +1,173 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import java.lang.String?>
-<?import javafx.collections.FXCollections?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.DatePicker?>
+<?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ListView?>
-<?import javafx.scene.control.Tab?>
-<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.TextArea?>
 <?import javafx.scene.control.TextField?>
-<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.control.TitledPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Text?>
 
-<TabPane prefHeight="550.0" prefWidth="900.0" tabClosingPolicy="UNAVAILABLE" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="calculator.doubledegreehelper.controller.gradeSelectionController">
+<BorderPane styleClass="sel-root" stylesheets="@selection.css" prefHeight="650.0" prefWidth="1200.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="calculator.doubledegreehelper.controller.gradeSelectionController">
 
-   <tabs>
-      <Tab text="Auswahl">
-         <content>
-            <AnchorPane AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+   <!-- Kopfzeile: Zurück, Student, Zusammenfassung -->
+   <top>
+      <HBox alignment="CENTER_LEFT" spacing="16.0" styleClass="sel-header">
+         <padding><Insets top="12.0" right="20.0" bottom="12.0" left="16.0" /></padding>
+         <children>
+            <Button fx:id="backToHomeButton" mnemonicParsing="false" text="← Startseite" styleClass="ghost" />
+            <VBox spacing="2.0" HBox.hgrow="ALWAYS" minWidth="0.0">
                <children>
-                  <VBox alignment="TOP_CENTER" spacing="5.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-
-                     <VBox spacing="5.0">
-                        <children>
-
-                           <HBox alignment="CENTER_LEFT" spacing="10">
-                              <children>
-                                 <Region />
-                                 <Button fx:id="charDropdownButton" focusTraversable="false" minWidth="30.0" text="▼">
-                                    <opaqueInsets>
-                                       <Insets />
-                                    </opaqueInsets></Button>
-                                 <ComboBox fx:id="genderComboBox" minWidth="90.0" prefWidth="120.0" promptText="M/W">
-                                    <items>
-                                       <FXCollections fx:factory="observableArrayList">
-                                          <String fx:value="MALE" />
-                                          <String fx:value="FEMALE" />
-                                       </FXCollections>
-                                    </items>
-                                    <HBox.margin>
-                                       <Insets left="10.0" />
-                                    </HBox.margin>
-                                 </ComboBox>
-                                 
-                                 <Text fx:id="nameText" text="Vorname:" />
-                                 <TextArea fx:id="nameField" maxWidth="350.0" minWidth="90.0" prefRowCount="2" promptText="Vorname" wrapText="true" HBox.hgrow="NEVER" />
-
-                                 <Text fx:id="middleNameText" text="Mittelname:">
-                                    <HBox.margin>
-                                       <Insets left="10.0" />
-                                    </HBox.margin>
-                                 </Text>
-                                 <TextArea fx:id="middleNameField" maxWidth="350.0" minWidth="90.0" prefRowCount="2" promptText="Mittelname" wrapText="true" HBox.hgrow="NEVER" />
-
-                                 <Text fx:id="lastNameText" text="Nachname:">
-                                    <HBox.margin>
-                                       <Insets left="10.0" />
-                                    </HBox.margin>
-                                 </Text>
-                                 <TextArea fx:id="lastNameField" maxWidth="350.0" minWidth="90.0" prefRowCount="2" promptText="Nachname" wrapText="true" HBox.hgrow="NEVER" />
-
-                                 <Text fx:id="themeText" text="Thema:">
-                                    <HBox.margin>
-                                       <Insets left="15.0" right="5.0" />
-                                    </HBox.margin>
-                                 </Text>
-                                 <TextArea fx:id="themeField" maxWidth="700.0" minWidth="90.0" prefRowCount="2" prefWidth="700.0" promptText="Ausgewähltes Thema" wrapText="true" HBox.hgrow="ALWAYS" />
-
-                                 <Region HBox.hgrow="ALWAYS" />
-
-                                 <Text fx:id="ectsText" text="ECTS ausgewählt:">
-                                    <HBox.margin>
-                                       <Insets right="5.0" />
-                                    </HBox.margin>
-                                 </Text>
-                                 <Text fx:id="ectsCounter" text="0">
-                                    <HBox.margin>
-                                       <Insets right="15.0" />
-                                    </HBox.margin>
-                                 </Text>
-                              </children>
-                              <padding>
-                                 <Insets top="5.0" />
-                              </padding>
-                           </HBox>
-
-                           <HBox alignment="CENTER_LEFT" spacing="10">
-                              <children>
-                                 <Text text="Geboren am:">
-                                    <HBox.margin>
-                                       <Insets left="10.0" />
-                                    </HBox.margin>
-                                 </Text>
-                                 <DatePicker fx:id="birthDatePicker" promptText="TT/MM/JJJJ" HBox.hgrow="ALWAYS" />
-
-                                 <Text text="Geburtsort:" />
-                                 <TextField fx:id="birthPlaceField" promptText="Ort" HBox.hgrow="ALWAYS" />
-
-                                 <Text text="Matrikelnr.:" />
-                                 <TextField fx:id="matriculationField" promptText="000000" HBox.hgrow="ALWAYS" />
-
-                                 <Text text="Abgeschlossen:" />
-                                 <DatePicker fx:id="completionDatePicker" promptText="TT/MM/JJJJ" HBox.hgrow="ALWAYS">
-                                    <HBox.margin>
-                                       <Insets right="10.0" />
-                                    </HBox.margin>
-                                 </DatePicker>
-                              </children>
-                              <padding>
-                                 <Insets top="5.0" />
-                              </padding>
-                           </HBox>
-                           <HBox alignment="CENTER_LEFT" spacing="10">
-                              <children>
-                                 <Text text="Präsident">
-                                    <HBox.margin>
-                                       <Insets left="10.0" />
-                                    </HBox.margin>
-                                 </Text>
-                                 <TextField fx:id="presidentText" maxWidth="300.0" minWidth="200.0" promptText="Prof. Max Mustermann" text="Prof. Dr. Oliver Lenzen" HBox.hgrow="ALWAYS" />
-                                 <Text text="Chairperson:" />
-                                 <TextField fx:id="chairpersonText" maxWidth="300.0" minWidth="200.0" promptText="Prof. Max Mustermann" text="Prof. Dr. Thomas Fankhauser" HBox.hgrow="ALWAYS">
-                                    <HBox.margin>
-                                       <Insets right="10.0" />
-                                    </HBox.margin>
-                                 </TextField>
-                                 <Text text="Liefertermin" />
-                                 <DatePicker fx:id="deliverDatePicker" promptText="TT/MM/JJJJ" />
-                              </children>
-                              <padding>
-                                 <Insets top="5.0" />
-                              </padding>
-                           </HBox>
-
-                        </children>
-                        <padding>
-                           <Insets bottom="5.0" />
-                        </padding>
-                     </VBox>
-
-                     <ListView fx:id="listViewContainer" VBox.vgrow="ALWAYS" />
-
-                     <HBox alignment="CENTER" spacing="20">
-                        <children>
-                           <Button fx:id="autoSelectionButton" text="Auto. Auswahl" />
-                           <Button fx:id="backToHomeButton" text="Zurück zur Startseite" />
-                           <Button fx:id="createButton" text="Word-File erstellen" />
-                           <Button fx:id="safePathButton" text="Speicherordner festlegen" />
-                        </children>
-                     </HBox>
-
-                     <Text fx:id="safePathText" text="Speicherort zuerst festlegen!">
-                        <VBox.margin>
-                           <Insets bottom="5.0" />
-                        </VBox.margin></Text>
-
-                  </VBox>
+                  <Label fx:id="studentTitle" styleClass="sel-title" text="Student" />
+                  <Label fx:id="studentSubtitle" styleClass="muted" text="" />
                </children>
-            </AnchorPane>
+            </VBox>
+            <VBox fx:id="ectsChip" alignment="CENTER" styleClass="stat">
+               <children>
+                  <HBox alignment="BASELINE_CENTER" spacing="3.0">
+                     <children>
+                        <Text fx:id="ectsCounter" styleClass="stat-value" text="0" />
+                        <Text styleClass="stat-unit" text="/ 90" />
+                     </children>
+                  </HBox>
+                  <Label styleClass="stat-label" text="ECTS ausgewählt" />
+               </children>
+            </VBox>
+            <VBox alignment="CENTER" styleClass="stat">
+               <children>
+                  <Text fx:id="moduleCountText" styleClass="stat-value" text="0" />
+                  <Label styleClass="stat-label" text="Module" />
+               </children>
+            </VBox>
+            <VBox alignment="CENTER" styleClass="stat">
+               <children>
+                  <Text fx:id="avgGradeText" styleClass="stat-value" text="–" />
+                  <Label styleClass="stat-label" text="Ø Note (gewichtet)" />
+               </children>
+            </VBox>
+         </children>
+      </HBox>
+   </top>
+
+   <!-- Links: Angaben -->
+   <left>
+      <ScrollPane fitToWidth="true" hbarPolicy="NEVER" prefWidth="400.0" minWidth="340.0" styleClass="form-scroll">
+         <content>
+            <VBox spacing="14.0" styleClass="form-panel">
+               <padding><Insets top="16.0" right="16.0" bottom="16.0" left="16.0" /></padding>
+               <children>
+
+                  <HBox alignment="CENTER_LEFT" spacing="8.0">
+                     <children>
+                        <Label text="Persönliche Daten" styleClass="section-title" />
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Button fx:id="charDropdownButton" focusTraversable="false" mnemonicParsing="false" text="ă ê ơ ▾" styleClass="ghost, small" />
+                     </children>
+                  </HBox>
+                  <GridPane hgap="10.0" vgap="8.0">
+                     <columnConstraints>
+                        <ColumnConstraints minWidth="95.0" prefWidth="95.0" />
+                        <ColumnConstraints hgrow="ALWAYS" />
+                     </columnConstraints>
+                     <children>
+                        <Label text="Geschlecht" styleClass="field-label" GridPane.rowIndex="0" />
+                        <ComboBox fx:id="genderComboBox" maxWidth="Infinity" promptText="Geschlecht" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+                        <Label text="Vorname" styleClass="field-label" GridPane.rowIndex="1" />
+                        <TextField fx:id="nameField" promptText="Vorname" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                        <Label text="Mittelname" styleClass="field-label" GridPane.rowIndex="2" />
+                        <TextField fx:id="middleNameField" promptText="optional" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                        <Label text="Nachname" styleClass="field-label" GridPane.rowIndex="3" />
+                        <TextField fx:id="lastNameField" promptText="Nachname" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                        <Label text="Geboren am" styleClass="field-label" GridPane.rowIndex="4" />
+                        <DatePicker fx:id="birthDatePicker" maxWidth="Infinity" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+                        <Label text="Geburtsort" styleClass="field-label" GridPane.rowIndex="5" />
+                        <TextField fx:id="birthPlaceField" promptText="Stadt" GridPane.columnIndex="1" GridPane.rowIndex="5" />
+                        <Label text="Matrikelnr." styleClass="field-label" GridPane.rowIndex="6" />
+                        <TextField fx:id="matriculationField" promptText="00000000" GridPane.columnIndex="1" GridPane.rowIndex="6" />
+                     </children>
+                  </GridPane>
+
+                  <Label text="Abschlussarbeit" styleClass="section-title" />
+                  <GridPane hgap="10.0" vgap="8.0">
+                     <columnConstraints>
+                        <ColumnConstraints minWidth="95.0" prefWidth="95.0" />
+                        <ColumnConstraints hgrow="ALWAYS" />
+                     </columnConstraints>
+                     <children>
+                        <Label text="Thema" styleClass="field-label" GridPane.rowIndex="0" GridPane.valignment="TOP">
+                           <GridPane.margin><Insets top="5.0" /></GridPane.margin>
+                        </Label>
+                        <TextArea fx:id="themeField" prefRowCount="3" wrapText="true" promptText="Titel der Masterarbeit" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+                        <Label text="Abgabe" styleClass="field-label" GridPane.rowIndex="1" />
+                        <DatePicker fx:id="deliverDatePicker" maxWidth="Infinity" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                        <Label text="Abschluss" styleClass="field-label" GridPane.rowIndex="2" />
+                        <DatePicker fx:id="completionDatePicker" maxWidth="Infinity" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                     </children>
+                  </GridPane>
+
+                  <Label text="Unterschriften" styleClass="section-title" />
+                  <GridPane hgap="10.0" vgap="8.0">
+                     <columnConstraints>
+                        <ColumnConstraints minWidth="95.0" prefWidth="95.0" />
+                        <ColumnConstraints hgrow="ALWAYS" />
+                     </columnConstraints>
+                     <children>
+                        <Label text="Präsident" styleClass="field-label" GridPane.rowIndex="0" />
+                        <TextField fx:id="presidentText" promptText="Prof. Dr. …" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+                        <Label text="Chairperson" styleClass="field-label" GridPane.rowIndex="1" />
+                        <TextField fx:id="chairpersonText" promptText="Prof. Dr. …" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                     </children>
+                  </GridPane>
+               </children>
+            </VBox>
          </content>
-      </Tab>
-   </tabs>
-</TabPane>
+      </ScrollPane>
+   </left>
+
+   <!-- Mitte: Module -->
+   <center>
+      <VBox spacing="8.0">
+         <padding><Insets top="16.0" right="20.0" bottom="12.0" left="20.0" /></padding>
+         <children>
+            <HBox alignment="CENTER_LEFT" spacing="10.0">
+               <children>
+                  <Label text="Anrechenbare Module" styleClass="section-title" />
+                  <Label fx:id="moduleHint" styleClass="muted" text="Haken setzen, was ins Zeugnis soll" />
+                  <Region HBox.hgrow="ALWAYS" />
+                  <Button fx:id="autoSelectionButton" mnemonicParsing="false" text="Auto-Auswahl" />
+               </children>
+            </HBox>
+            <ListView fx:id="listViewContainer" VBox.vgrow="ALWAYS" styleClass="module-list" />
+            <TitledPane fx:id="unknownPane" expanded="false" animated="true" text="Nicht zugeordnet" styleClass="unknown-pane">
+               <content>
+                  <ListView fx:id="unknownListView" prefHeight="160.0" styleClass="module-list" />
+               </content>
+            </TitledPane>
+         </children>
+      </VBox>
+   </center>
+
+   <!-- Unten: Speicherort + Erstellen -->
+   <bottom>
+      <HBox alignment="CENTER_LEFT" spacing="10.0" styleClass="sel-footer">
+         <padding><Insets top="10.0" right="20.0" bottom="10.0" left="16.0" /></padding>
+         <children>
+            <Label text="Speichern in:" styleClass="muted" />
+            <Text fx:id="safePathText" styleClass="path-text" text="" />
+            <Button fx:id="safePathButton" mnemonicParsing="false" text="Ändern" styleClass="ghost, small" />
+            <Region HBox.hgrow="ALWAYS" />
+            <Button fx:id="createButton" defaultButton="true" mnemonicParsing="false" prefHeight="36.0" minWidth="180.0" text="Erstellen" styleClass="primary" />
+         </children>
+      </HBox>
+   </bottom>
+</BorderPane>
