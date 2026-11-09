@@ -215,9 +215,21 @@ public class homeController {
             ContextMenu menu = new ContextMenu(openItem, doneItem, deleteItem);
             emptyProperty().addListener((obs, was, isEmpty) -> setContextMenu(isEmpty ? null : menu));
 
-            box = new HBox(6, doneCheck, number, new Label("-"), name, missingBadge, newBadge, dateLabel, deleteButton);
+            // Zwei Zeilen: oben Name + NEU, darunter Matrikelnummer, Datum, Hinweise
+            newBadge.setMinWidth(Region.USE_PREF_SIZE);
+            missingBadge.setMinWidth(Region.USE_PREF_SIZE);
+            number.setMinWidth(Region.USE_PREF_SIZE);
+            Label dot = new Label("·");
+            dot.getStyleClass().add("student-meta");
+            HBox top = new HBox(8, name, newBadge);
+            top.setAlignment(Pos.CENTER_LEFT);
+            HBox bottom = new HBox(6, number, dot, dateLabel, missingBadge);
+            bottom.setAlignment(Pos.CENTER_LEFT);
+            javafx.scene.layout.VBox text = new javafx.scene.layout.VBox(2, top, bottom);
+            text.setMinWidth(0);
+            HBox.setHgrow(text, Priority.ALWAYS);
+            box = new HBox(10, doneCheck, text, deleteButton);
             box.setAlignment(Pos.CENTER_LEFT);
-            box.getChildren().get(2).getStyleClass().add("student-name");
 
             setOnMouseClicked(e -> {
                 if (!isEmpty() && getItem() != null && e.getButton() == MouseButton.PRIMARY) {
