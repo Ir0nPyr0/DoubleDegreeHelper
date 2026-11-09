@@ -2,6 +2,8 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.RadioButton?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ListView?>
 <?import javafx.scene.control.ProgressIndicator?>
@@ -10,6 +12,7 @@
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.FlowPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
@@ -18,7 +21,7 @@
 
    <!-- Links: Suche + Studentenliste -->
    <left>
-      <VBox spacing="8.0" prefWidth="360.0" styleClass="side-panel, left">
+      <VBox spacing="8.0" prefWidth="400.0" minWidth="340.0" styleClass="side-panel, left">
          <padding><Insets top="16.0" right="16.0" bottom="16.0" left="16.0" /></padding>
          <children>
             <HBox alignment="BASELINE_LEFT" spacing="8.0">
@@ -36,7 +39,7 @@
    <!-- Mitte: Logo, Drag & Drop, bisherige Aktionen -->
    <center>
       <VBox alignment="TOP_CENTER" spacing="16.0">
-         <padding><Insets top="16.0" right="24.0" bottom="16.0" left="24.0" /></padding>
+         <padding><Insets top="16.0" right="16.0" bottom="16.0" left="16.0" /></padding>
          <children>
             <ImageView fitHeight="170.0" fitWidth="260.0" pickOnBounds="true" preserveRatio="true">
                <image>
@@ -48,7 +51,7 @@
                   <VBox alignment="CENTER" spacing="6.0" mouseTransparent="true">
                      <children>
                         <Label fx:id="dropTitle" text="PDF- und XLSX-Dateien hierher ziehen" styleClass="drop-title" />
-                        <Label text="Mehrere Dateien auf einmal möglich. Zuordnung über die Matrikelnummer." styleClass="muted" wrapText="true" />
+                        <Label text="Mehrere Dateien auf einmal möglich. Zuordnung über die Matrikelnummer." styleClass="muted" wrapText="true" textAlignment="CENTER" />
                      </children>
                   </VBox>
                </children>
@@ -59,20 +62,20 @@
                   <Button fx:id="settingsButton" mnemonicParsing="false" prefHeight="40.0" prefWidth="160.0" text="Einstellungen" />
                </children>
             </HBox>
-            <HBox alignment="CENTER" spacing="10.0">
+            <FlowPane alignment="CENTER" hgap="10.0" vgap="10.0" prefWrapLength="300.0">
                <children>
-                  <Button fx:id="transcriptEditButton" mnemonicParsing="false" text="Zeugnis bearbeiten" />
-                  <Button fx:id="diplomaEditButton" mnemonicParsing="false" text="Diploma bearbeiten" />
-                  <Button fx:id="certificateEditButton" mnemonicParsing="false" text="Zertifikat bearbeiten" />
+                  <Button fx:id="transcriptEditButton" minWidth="-Infinity" mnemonicParsing="false" text="Zeugnis bearbeiten" />
+                  <Button fx:id="diplomaEditButton" minWidth="-Infinity" mnemonicParsing="false" text="Diploma bearbeiten" />
+                  <Button fx:id="certificateEditButton" minWidth="-Infinity" mnemonicParsing="false" text="Zertifikat bearbeiten" />
                </children>
-            </HBox>
+            </FlowPane>
          </children>
       </VBox>
    </center>
 
    <!-- Rechts oben: Ordner + Aktualisieren -->
    <right>
-      <VBox spacing="8.0" prefWidth="270.0" styleClass="side-panel, right">
+      <VBox spacing="8.0" prefWidth="310.0" minWidth="260.0" styleClass="side-panel, right">
          <padding><Insets top="16.0" right="16.0" bottom="16.0" left="16.0" /></padding>
          <children>
             <Label text="Quellordner" styleClass="section-title" />
@@ -90,6 +93,23 @@
                   <Label fx:id="statusLabel" styleClass="muted" wrapText="true" />
                </children>
             </HBox>
+            <Separator>
+               <VBox.margin><Insets top="8.0" bottom="4.0" /></VBox.margin>
+            </Separator>
+            <Label text="Export" styleClass="section-title" />
+            <Button fx:id="saveFolderButton" maxWidth="Infinity" mnemonicParsing="false" text="Speicherort festlegen" />
+            <Label fx:id="saveFolderLabel" styleClass="path-label" maxWidth="Infinity" />
+            <Label text="Erstellen als" styleClass="muted" />
+            <HBox spacing="12.0">
+               <children>
+                  <RadioButton fx:id="wordRadio" mnemonicParsing="false" text="Word" />
+                  <RadioButton fx:id="pdfRadio" mnemonicParsing="false" text="PDF" />
+                  <RadioButton fx:id="bothRadio" mnemonicParsing="false" text="Word + PDF" />
+               </children>
+            </HBox>
+            <CheckBox fx:id="openFolderCheck" mnemonicParsing="false" text="Ordner nach Export öffnen">
+               <VBox.margin><Insets top="4.0" /></VBox.margin>
+            </CheckBox>
          </children>
       </VBox>
    </right>

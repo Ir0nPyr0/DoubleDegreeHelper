@@ -2,6 +2,8 @@ package calculator.doubledegreehelper.controller;
 
 import calculator.doubledegreehelper.AppManager;
 import calculator.doubledegreehelper.SceneManager;
+import calculator.doubledegreehelper.ExportSettings;
+import calculator.doubledegreehelper.PdfConverter;
 import calculator.doubledegreehelper.SelectorAlgorithm;
 import calculator.doubledegreehelper.StudentRegistry;
 import calculator.doubledegreehelper.WordFileCreator;
@@ -11,6 +13,7 @@ import calculator.doubledegreehelper.student.Gender;
 import calculator.doubledegreehelper.student.Student;
 import calculator.doubledegreehelper.student.StudentModule;
 import javafx.collections.FXCollections;
+import javafx.concurrent.Task;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -28,6 +31,7 @@ import javafx.stage.Window;
 import javafx.util.StringConverter;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.Normalizer;
 import java.time.Instant;
@@ -56,10 +60,8 @@ public class gradeSelectionController {
 
     @FXML
     public void initialize() {
-        String saved = prefs.get("savePath", "");
-        if (saved.isBlank()) {
-            saved = AppManager.getDefaultWordDir();
-        }
+        String saved = ExportSettings.getSavePath();
+        createButton.setText(ExportSettings.getFormat().getActionText());
 
         java.io.File defaultDir = new java.io.File(saved);
         if (!defaultDir.exists()) {
@@ -341,20 +343,77 @@ public class gradeSelectionController {
         }
         System.out.println("================================");
 
-        try {
-            WordFileCreator.createWord(Path.of(out), AppManager.getStudent(), activeModule);
-            StudentRegistry.markExported(AppManager.getStudent());
-            new Alert(
-                Alert.AlertType.INFORMATION,
-                "Die Word-Dateien wurden erfolgreich erstellt:\n" + out
-            ).showAndWait();
-        } catch (Exception ex) {
+        ExportSettings.Format format = ExportSettings.getFormat();
+        boolean openFolder = ExportSettings.isOpenFolderAfterExport();
+        Student student = AppManager.getStudent();
+        String idleText = createButton.getText();
+        createButton.setDisable(true);
+        createButton.setText(format.wantsPdf() ? "Erstelle PDF…" : "Erstelle Word…");
+
+        Task<Path> job = new Task<>() {
+            @Override
+            protected Path call() throws Exception {
+                WordFileCreator.createWord(Path.of(out), student, activeModule);
+                Path dir = WordFileCreator.getLastOutputDir();
+                if (format.wantsPdf()) {
+                    String prefix = student.getNumber() + "-";
+                    List<Path> docx;
+                    try (var files = Files.list(dir)) {
+                        docx = files.filter(f -> {
+                            String n = f.getFileName().toString();
+                            return n.startsWith(prefix) && n.toLowerCase(Locale.ROOT).endsWith(".docx");
+                        }).toList();
+                    }
+                    PdfConverter.convert(docx);
+                    if (!format.keepsWord()) {
+                        for (Path f : docx) Files.deleteIfExists(f);
+                    }
+                }
+                return dir;
+            }
+        };
+        job.setOnSucceeded(e -> {
+            createButton.setText(idleText);
+            createButton.setDisable(false);
+            Path dir = job.getValue();
+            StudentRegistry.markExported(student);
+            if (openFolder) {
+                openFolder(dir);
+            } else {
+                new Alert(Alert.AlertType.INFORMATION,
+                    (format == ExportSettings.Format.WORD ? "Die Word-Dateien wurden" :
+                     format == ExportSettings.Format.PDF ? "Die PDF-Dateien wurden" : "Die Word- und PDF-Dateien wurden")
+                        + " erfolgreich erstellt:\n" + dir).showAndWait();
+            }
+        });
+        job.setOnFailed(e -> {
+            createButton.setText(idleText);
+            createButton.setDisable(false);
+            Throwable ex = job.getException();
             ex.printStackTrace();
             Alert err = new Alert(Alert.AlertType.ERROR);
-            err.setHeaderText("Fehler beim Erstellen der Word-Datei");
+            err.setHeaderText(format.wantsPdf() ? "Fehler beim Erstellen der Dateien" : "Fehler beim Erstellen der Word-Datei");
             err.setContentText(ex.getMessage());
             err.showAndWait();
-        }
+        });
+        Thread t = new Thread(job, "export");
+        t.setDaemon(true);
+        t.start();
+    }
+
+    private static void openFolder(Path dir) {
+        if (dir == null) return;
+        // Desktop.open blockiert unter Windows teils kurz, daher eigener Thread
+        Thread t = new Thread(() -> {
+            try {
+                java.awt.Desktop.getDesktop().open(dir.toFile());
+            } catch (Exception ex) {
+                javafx.application.Platform.runLater(() ->
+                    new Alert(Alert.AlertType.WARNING, "Ordner konnte nicht geöffnet werden:\n" + dir).showAndWait());
+            }
+        }, "open-folder");
+        t.setDaemon(true);
+        t.start();
     }
 
     private void handleSafePath(ActionEvent ev){
@@ -363,8 +422,7 @@ public class gradeSelectionController {
         Window w = safePathButton.getScene().getWindow();
         File dir = dc.showDialog(w);
         if(dir!=null){
-            AppManager.setSavePath(dir.getAbsolutePath());
-            prefs.put("savePath", dir.getAbsolutePath());
+            ExportSettings.setSavePath(dir.getAbsolutePath());
             safePathText.setText("Pfad festgelegt: "+dir.getAbsolutePath());
             safePathText.setVisible(true);
             createButton.setDisable(false);

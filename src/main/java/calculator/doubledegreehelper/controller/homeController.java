@@ -2,6 +2,7 @@ package calculator.doubledegreehelper.controller;
 
 import calculator.doubledegreehelper.AppManager;
 import calculator.doubledegreehelper.AppVersion;
+import calculator.doubledegreehelper.ExportSettings;
 import calculator.doubledegreehelper.SceneManager;
 import calculator.doubledegreehelper.StudentRegistry;
 import calculator.doubledegreehelper.ThemeReader;
@@ -57,6 +58,10 @@ public class homeController {
     @FXML private TextField searchField;
     @FXML private ListView<StudentRecord> studentList;
     @FXML private StackPane dropZone;
+    @FXML private Button saveFolderButton;
+    @FXML private Label saveFolderLabel;
+    @FXML private RadioButton wordRadio, pdfRadio, bothRadio;
+    @FXML private CheckBox openFolderCheck;
 
     private final Label placeholder = new Label();
     private FilteredList<StudentRecord> filtered;
@@ -75,6 +80,7 @@ public class homeController {
         setupStudentList();
         setupFolders();
         setupDragAndDrop();
+        setupExport();
 
         if (StudentRegistry.claimStartupScan() && hasAnyFolder()) {
             runFolderScan();
@@ -108,6 +114,8 @@ public class homeController {
         studentList.setOnKeyPressed(e -> {
             if (e.getCode() == KeyCode.ENTER) {
                 openStudent(studentList.getSelectionModel().getSelectedItem());
+            } else if (e.getCode() == KeyCode.DELETE) {
+                confirmDelete(studentList.getSelectionModel().getSelectedItem());
             }
         });
 
@@ -148,6 +156,7 @@ public class homeController {
         private final Label name = new Label();
         private final Label newBadge = new Label("NEU");
         private final Label missingBadge = new Label();
+        private final Button deleteButton = new Button("✕");
         private final HBox box;
 
         StudentCell() {
@@ -158,7 +167,21 @@ public class homeController {
             name.setMinWidth(0);
             HBox.setHgrow(name, Priority.ALWAYS);
             name.setMaxWidth(Double.MAX_VALUE);
-            box = new HBox(6, number, new Label("-"), name, missingBadge, newBadge);
+            deleteButton.getStyleClass().add("delete-button");
+            deleteButton.setFocusTraversable(false);
+            deleteButton.setTooltip(new Tooltip("Student aus der Liste löschen"));
+            deleteButton.setOnAction(e -> confirmDelete(getItem()));
+            // Klick auf den Button soll den Studenten nicht öffnen
+            deleteButton.setOnMouseClicked(javafx.event.Event::consume);
+
+            MenuItem deleteItem = new MenuItem("Löschen…");
+            deleteItem.setOnAction(e -> confirmDelete(getItem()));
+            MenuItem openItem = new MenuItem("Öffnen");
+            openItem.setOnAction(e -> openStudent(getItem()));
+            ContextMenu menu = new ContextMenu(openItem, deleteItem);
+            emptyProperty().addListener((obs, was, isEmpty) -> setContextMenu(isEmpty ? null : menu));
+
+            box = new HBox(6, number, new Label("-"), name, missingBadge, newBadge, deleteButton);
             box.setAlignment(Pos.CENTER_LEFT);
             box.getChildren().get(1).getStyleClass().add("student-name");
 
@@ -215,6 +238,27 @@ public class homeController {
         slide.setInterpolator(Interpolator.EASE_OUT);
         ParallelTransition anim = new ParallelTransition(fade, slide);
         anim.play();
+    }
+
+    /** Löschen nur nach Bestätigung; die PDF/XLSX-Dateien selbst bleiben erhalten. */
+    private void confirmDelete(StudentRecord rec) {
+        if (rec == null) return;
+        ButtonType delete = new ButtonType("Löschen", ButtonBar.ButtonData.OK_DONE);
+        ButtonType cancel = new ButtonType("Abbrechen", ButtonBar.ButtonData.CANCEL_CLOSE);
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION,
+            "Der Student wird aus der Liste entfernt. Die PDF- und XLSX-Dateien bleiben erhalten.\n"
+                + "Ziehst du die PDF später erneut hinein, erscheint er wieder.",
+            cancel, delete);
+        alert.initOwner(root.getScene().getWindow());
+        alert.setTitle("Student löschen");
+        alert.setHeaderText(rec + " löschen?");
+        ((Button) alert.getDialogPane().lookupButton(cancel)).setDefaultButton(true);
+        ((Button) alert.getDialogPane().lookupButton(delete)).setDefaultButton(false);
+        if (alert.showAndWait().orElse(cancel) == delete) {
+            StudentRegistry.remove(rec);
+            statusLabel.setText(rec + " gelöscht.");
+            statusLabel.setTooltip(null);
+        }
     }
 
     /** Klick auf einen Studenten: Daten aus PDF + XLSX laden und direkt zur Auswahl springen. */
@@ -332,6 +376,45 @@ public class homeController {
             statusLabel.setTooltip(null);
         }
         statusLabel.setText(sb.toString());
+    }
+
+    // ------------------------------------------------------------------ Export
+
+    private void setupExport() {
+        setPathLabel(saveFolderLabel, ExportSettings.getSavePath());
+        saveFolderButton.setOnAction(e -> {
+            DirectoryChooser dc = new DirectoryChooser();
+            dc.setTitle("Speicherort für die erstellten Dateien wählen");
+            File init = new File(ExportSettings.getSavePath());
+            if (init.isDirectory()) dc.setInitialDirectory(init);
+            File dir = dc.showDialog(root.getScene().getWindow());
+            if (dir != null) {
+                ExportSettings.setSavePath(dir.getAbsolutePath());
+                setPathLabel(saveFolderLabel, dir.getAbsolutePath());
+            }
+        });
+
+        ToggleGroup group = new ToggleGroup();
+        wordRadio.setToggleGroup(group);
+        pdfRadio.setToggleGroup(group);
+        bothRadio.setToggleGroup(group);
+        wordRadio.setUserData(ExportSettings.Format.WORD);
+        pdfRadio.setUserData(ExportSettings.Format.PDF);
+        bothRadio.setUserData(ExportSettings.Format.BOTH);
+        switch (ExportSettings.getFormat()) {
+            case PDF -> pdfRadio.setSelected(true);
+            case BOTH -> bothRadio.setSelected(true);
+            default -> wordRadio.setSelected(true);
+        }
+        Tooltip pdfHint = new Tooltip("PDF wird über Microsoft Word erstellt (alternativ LibreOffice).");
+        pdfRadio.setTooltip(pdfHint);
+        bothRadio.setTooltip(pdfHint);
+        group.selectedToggleProperty().addListener((obs, old, sel) -> {
+            if (sel != null) ExportSettings.setFormat((ExportSettings.Format) sel.getUserData());
+        });
+
+        openFolderCheck.setSelected(ExportSettings.isOpenFolderAfterExport());
+        openFolderCheck.selectedProperty().addListener((obs, old, on) -> ExportSettings.setOpenFolderAfterExport(on));
     }
 
     // ------------------------------------------------------------------ Drag & Drop
