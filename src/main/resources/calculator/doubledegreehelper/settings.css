@@ -186,3 +186,30 @@
     -fx-text-fill: #1e293b;
     -fx-fill: #1e293b;
 }
+
+/* Kategorien sortieren */
+.drag-handle {
+    -fx-text-fill: #94a3b8;
+    -fx-font-size: 14px;
+    -fx-cursor: move;
+    -fx-padding: 0 2 0 0;
+}
+.drag-handle:hover {
+    -fx-text-fill: -accent;
+}
+.position {
+    -fx-text-fill: -muted;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+}
+.card.dragging {
+    -fx-opacity: 0.4;
+}
+.card.drop-above {
+    -fx-border-color: -accent transparent transparent transparent;
+    -fx-border-width: 2 1 1 1;
+}
+.card.drop-below {
+    -fx-border-color: transparent transparent -accent transparent;
+    -fx-border-width: 1 1 2 1;
+}

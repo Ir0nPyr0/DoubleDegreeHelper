@@ -77,62 +77,7 @@ public class settingsController {
         });
 
         categoryContainer.setItems(AppManager.getCategories());
-        categoryContainer.setCellFactory(lv -> new ListCell<>() {
-            private final TextField nameField = new TextField();
-            private final Button delBtn = new Button("✕");
-            private final TextField priority = new TextField();
-            private final HBox box = new HBox(6, nameField, priority, delBtn);
-
-            {
-                nameField.setPromptText("Kategoriename");
-                priority.setPromptText("Prio");
-                priority.setPrefWidth(52);
-                priority.setTooltip(new Tooltip("Priorität: bestimmt die Reihenfolge im Zeugnis"));
-                delBtn.getStyleClass().add("delete-button");
-                delBtn.setFocusTraversable(false);
-                box.getStyleClass().add("card");
-                setPrefWidth(0);
-                box.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
-
-                HBox.setHgrow(nameField, Priority.ALWAYS);
-                delBtn.setOnAction(e -> {
-                    Category c = getItem();
-                    if (c != null && confirmDelete("Kategorie", c.getName())) {
-                        AppManager.removeCategory(c);
-                    }
-                });
-                nameField.textProperty().addListener((obs, o, n) -> {
-                    Category c = getItem();
-                    if (c != null) {
-                        c.setName(n);
-                        hhnModuleContainer.refresh();
-                        compareModuleContainer.refresh();
-                    }
-                });
-                priority.textProperty().addListener((obs, o, n) -> {
-                    Category c = getItem();
-                    if (c != null) {
-                        if (!n.isEmpty()) {
-                            c.setPriority(Integer.parseInt(n));
-                        }
-                    }
-                });
-                UnaryOperator<Change> priorityDigits = ch -> ch.getControlNewText().matches("\\d*") ? ch : null;
-                priority.setTextFormatter(new TextFormatter<>(priorityDigits));
-            }
-
-            @Override
-            protected void updateItem(Category c, boolean empty) {
-                super.updateItem(c, empty);
-                if (empty || c == null) {
-                    setGraphic(null);
-                } else {
-                    nameField.setText(c.getName());
-                    priority.setText(String.valueOf(c.getPriority()));
-                    setGraphic(box);
-                }
-            }
-        });
+        categoryContainer.setCellFactory(lv -> new CategoryCell());
 
         backButton.setOnAction(this::handleBack);
         saveButton.setOnAction(this::handleSave);
@@ -237,6 +182,100 @@ public class settingsController {
                 .append("\n");
         }
     }
+    /** Kategorie-Karte: Reihenfolge per Drag and Drop am Griff, oben = zuerst im Zeugnis. */
+    private class CategoryCell extends ListCell<Category> {
+        private static final javafx.scene.input.DataFormat INDEX =
+            new javafx.scene.input.DataFormat("application/x-ddh-category-index");
+        private final Label handle = new Label("\u2630");
+        private final Label position = new Label();
+        private final TextField nameField = new TextField();
+        private final Button delBtn = new Button("\u2715");
+        private final HBox box = new HBox(8, handle, position, nameField, delBtn);
+        private boolean updating;
+
+        CategoryCell() {
+            nameField.setPromptText("Kategoriename");
+            handle.getStyleClass().add("drag-handle");
+            handle.setTooltip(new Tooltip("Ziehen, um die Reihenfolge im Zeugnis zu ändern"));
+            position.getStyleClass().add("position");
+            position.setMinWidth(Region.USE_PREF_SIZE);
+            delBtn.getStyleClass().add("delete-button");
+            delBtn.setFocusTraversable(false);
+            delBtn.setMinWidth(Region.USE_PREF_SIZE);
+            box.getStyleClass().add("card");
+            box.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+            HBox.setHgrow(nameField, Priority.ALWAYS);
+            nameField.setMinWidth(40);
+            setPrefWidth(0);
+
+            delBtn.setOnAction(e -> {
+                Category c = getItem();
+                if (c != null && confirmDelete("Kategorie", c.getName())) {
+                    AppManager.removeCategory(c);
+                }
+            });
+            nameField.textProperty().addListener((obs, o, n) -> {
+                Category c = getItem();
+                if (c != null && !updating) {
+                    c.setName(n);
+                    hhnModuleContainer.refresh();
+                    compareModuleContainer.refresh();
+                }
+            });
+
+            handle.setOnDragDetected(e -> {
+                if (getItem() == null) return;
+                javafx.scene.input.Dragboard db = startDragAndDrop(javafx.scene.input.TransferMode.MOVE);
+                javafx.scene.input.ClipboardContent cc = new javafx.scene.input.ClipboardContent();
+                cc.put(INDEX, getIndex());
+                db.setContent(cc);
+                db.setDragView(box.snapshot(null, null), e.getX(), e.getY());
+                box.getStyleClass().add("dragging");
+                e.consume();
+            });
+            setOnDragOver(e -> {
+                if (e.getGestureSource() instanceof CategoryCell && e.getDragboard().hasContent(INDEX)) {
+                    e.acceptTransferModes(javafx.scene.input.TransferMode.MOVE);
+                    boolean below = getItem() == null || e.getY() > getHeight() / 2;
+                    box.getStyleClass().removeAll("drop-above", "drop-below");
+                    if (getItem() != null) box.getStyleClass().add(below ? "drop-below" : "drop-above");
+                }
+                e.consume();
+            });
+            setOnDragExited(e -> box.getStyleClass().removeAll("drop-above", "drop-below"));
+            setOnDragDropped(e -> {
+                boolean ok = false;
+                if (e.getDragboard().hasContent(INDEX)) {
+                    int from = (Integer) e.getDragboard().getContent(INDEX);
+                    int to = getItem() == null ? getListView().getItems().size()
+                        : getIndex() + (e.getY() > getHeight() / 2 ? 1 : 0);
+                    if (to > from) to--;
+                    AppManager.moveCategory(from, to);
+                    getListView().getSelectionModel().clearAndSelect(Math.min(to, getListView().getItems().size() - 1));
+                    ok = true;
+                }
+                e.setDropCompleted(ok);
+                e.consume();
+            });
+            setOnDragDone(e -> box.getStyleClass().remove("dragging"));
+        }
+
+        @Override
+        protected void updateItem(Category c, boolean empty) {
+            super.updateItem(c, empty);
+            box.getStyleClass().removeAll("drop-above", "drop-below", "dragging");
+            if (empty || c == null) {
+                setGraphic(null);
+            } else {
+                updating = true;
+                nameField.setText(c.getName());
+                updating = false;
+                position.setText((getIndex() + 1) + ".");
+                setGraphic(box);
+            }
+        }
+    }
+
     private static class ModuleCell extends ListCell<ModuleItem> {
         private final boolean isHhn;
         private final ComboBox<Semester> semesterBox = new ComboBox<>();
