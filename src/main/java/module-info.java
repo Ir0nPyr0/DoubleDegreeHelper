@@ -15,6 +15,7 @@ module calculator.doubledegreehelper {
     requires org.apache.pdfbox;
     requires org.apache.commons.logging;
     requires java.desktop;
+    requires java.net.http;
 
     opens calculator.doubledegreehelper           to javafx.fxml;
     opens calculator.doubledegreehelper.controller to javafx.fxml;
